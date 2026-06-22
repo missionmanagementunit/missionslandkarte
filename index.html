@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <title>Mission Intelligence – EU-Missionen in Österreich</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/slides.css" />
+</head>
+<body>
+
+  <!-- Header mit Tab-Bar — auf Folie 1 ausgeblendet -->
+  <header id="app-header" class="app-header hidden">
+    <div class="header-logo">
+      <img src="assets/logos/FFG_Logo.svg" alt="FFG"
+           onerror="this.style.visibility='hidden'" />
+    </div>
+    <nav class="tab-bar" role="tablist" aria-label="Folien-Navigation">
+      <button class="tab" data-slide="2" role="tab">Übersicht</button>
+      <button class="tab" data-slide="3" data-mission="climate" role="tab">Klimawandel meistern</button>
+      <button class="tab" data-slide="4" data-mission="cities"  role="tab">Klimaneutrale Stadt</button>
+      <button class="tab" data-slide="5" data-mission="cancer"  role="tab">Krebs besiegen</button>
+      <button class="tab" data-slide="6" data-mission="soil"    role="tab">Gesunde Böden</button>
+      <button class="tab" data-slide="7" data-mission="water"   role="tab">Wasser und Gewässer schützen</button>
+    </nav>
+  </header>
+
+  <main id="slides-container" class="slides-container">
+
+    <!-- Folie 1: Startseite — vollbild, kein Header, kein Sidebar -->
+    <div id="slide-1" class="slide slide-start active" data-slide="1">
+      <div class="slide-start__content">
+        <h1 class="slide-start__title">Mission Intelligence</h1>
+        <p class="slide-start__subtitle">Die EU-Missionen in Österreich — Umsetzung mit Impact</p>
+      </div>
+      <footer class="slide-start__logo">
+        <img src="assets/logos/FFG_Logo.svg" alt="FFG"
+             onerror="this.style.visibility='hidden'" />
+      </footer>
+      <span class="slide-start__hint">Klicken zum Starten</span>
+    </div>
+
+    <!-- Folie 2: Gesamtübersicht -->
+    <div id="slide-2" class="slide slide-overview" data-slide="2">
+      <div class="slide-layout">
+        <aside class="sidebar" id="sidebar-overview">
+          <!-- populated by legend.js on first visit -->
+        </aside>
+        <div class="slide-main">
+          <div class="map-container" id="map-overview">
+            <!-- Leaflet map injected by slide-overview.js -->
+          </div>
+          <div class="stats-panel" id="stats-overview">
+            <!-- populated by chart.js; hidden until APP_CONFIG enables content -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Folie 3: Klimawandel meistern -->
+    <div id="slide-3" class="slide slide-mission" data-slide="3" data-mission="climate">
+      <div class="slide-layout">
+        <aside class="sidebar" id="sidebar-climate">
+          <p class="sidebar__placeholder" style="color:var(--m-climate)">Klimawandel meistern — Sidebar (Phase 3)</p>
+        </aside>
+        <section class="map-container" id="map-climate">
+          <p class="map-placeholder">Karte — Phase 2</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Folie 4: Klimaneutrale Stadt -->
+    <div id="slide-4" class="slide slide-mission" data-slide="4" data-mission="cities">
+      <div class="slide-layout">
+        <aside class="sidebar" id="sidebar-cities">
+          <p class="sidebar__placeholder" style="color:var(--m-cities)">Klimaneutrale Stadt — Sidebar (Phase 3)</p>
+        </aside>
+        <section class="map-container" id="map-cities">
+          <p class="map-placeholder">Karte — Phase 2</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Folie 5: Krebs besiegen -->
+    <div id="slide-5" class="slide slide-mission" data-slide="5" data-mission="cancer">
+      <div class="slide-layout">
+        <aside class="sidebar" id="sidebar-cancer">
+          <p class="sidebar__placeholder" style="color:var(--m-cancer)">Krebs besiegen — Sidebar (Phase 3)</p>
+        </aside>
+        <section class="map-container" id="map-cancer">
+          <p class="map-placeholder">Karte — Phase 2</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Folie 6: Gesunde Böden -->
+    <div id="slide-6" class="slide slide-mission" data-slide="6" data-mission="soil">
+      <div class="slide-layout">
+        <aside class="sidebar" id="sidebar-soil">
+          <p class="sidebar__placeholder" style="color:var(--m-soil)">Gesunde Böden — Sidebar (Phase 3)</p>
+        </aside>
+        <section class="map-container" id="map-soil">
+          <p class="map-placeholder">Karte — Phase 2</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Folie 7: Wasser und Gewässer schützen -->
+    <div id="slide-7" class="slide slide-mission" data-slide="7" data-mission="water">
+      <div class="slide-layout">
+        <aside class="sidebar" id="sidebar-water">
+          <p class="sidebar__placeholder" style="color:var(--m-water)">Wasser und Gewässer schützen — Sidebar (Phase 3)</p>
+        </aside>
+        <section class="map-container" id="map-water">
+          <p class="map-placeholder">Karte — Phase 2</p>
+        </section>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Tile modal — created by tile.js, lives outside <main> to avoid slide clipping -->
+  <div id="tile-overlay" class="tile-overlay" role="dialog" aria-modal="true"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="data/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/components/legend.js"></script>
+  <script src="js/components/tile.js"></script>
+  <script src="js/components/chart.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/slides/slide-overview.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

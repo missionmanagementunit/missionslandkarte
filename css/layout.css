@@ -1,0 +1,153 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background: var(--neutral-900);
+  color: var(--paper);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: var(--neutral-900);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 20px;
+  z-index: 100;
+  transition: opacity var(--transition-fast), visibility var(--transition-fast);
+}
+
+.app-header.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.header-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.header-logo img {
+  height: 32px;
+  display: block;
+}
+
+/* ── Tab Bar ─────────────────────────────────────────────────────────── */
+
+.tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  flex: 1;
+}
+
+.tab {
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--neutral-400);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background: var(--neutral-800);
+  color: var(--neutral-100);
+}
+
+.tab.active {
+  background: var(--neutral-700);
+  color: white;
+}
+
+/* Mission-colored active states for slides 3–7 */
+.tab.active[data-mission="climate"] { background: var(--m-climate); }
+.tab.active[data-mission="cities"]  { background: var(--m-cities);  }
+.tab.active[data-mission="cancer"]  { background: var(--m-cancer);  }
+.tab.active[data-mission="soil"]    { background: var(--m-soil);    }
+.tab.active[data-mission="water"]   { background: var(--m-water);   }
+
+/* ── Slides container ────────────────────────────────────────────────── */
+
+.slides-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ── Slide layout (slides 2–7) ───────────────────────────────────────── */
+
+.slide-layout {
+  display: flex;
+  height: 100%;
+  padding-top: var(--header-height);
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--neutral-800);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Right-side area: map + optional stats panel stacked vertically */
+.slide-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.slide-main .map-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar__placeholder {
+  font-size: 12px;
+  color: var(--neutral-500);
+  font-style: italic;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+  background: var(--neutral-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.map-placeholder {
+  font-size: 14px;
+  color: var(--neutral-500);
+  font-style: italic;
+}
