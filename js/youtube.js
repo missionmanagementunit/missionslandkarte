@@ -35,10 +35,11 @@
 
       entry.player = new YT.Player(elementId, {
         videoId,
-        playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+        playerVars: { rel: 0, modestbranding: 1, playsinline: 1, disablekb: 1 },
         events: {
-          onReady: () => {
+          onReady: p => {
             entry.ready = true;
+            p.target.unloadModule('captions');
             if (entry.pendingFullscreen) { openVideoFullscreen(elementId); entry.pendingFullscreen = false; }
             else if (entry.pendingPlay) { entry.player.playVideo(); entry.pendingPlay = false; }
           },
