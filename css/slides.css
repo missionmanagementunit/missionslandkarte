@@ -78,17 +78,12 @@
   pointer-events: none;
 }
 
-/* YT API injects the <iframe> inside #yt-bg-player */
-#yt-bg-player {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* Cover technique: iframe is always larger than the screen so no black bars
-   appear on non-16:9 displays. The overflow is clipped by the parent's
-   overflow:hidden. 56.25vw = 9/16 of viewport width; 177.78vh = 16/9 of
-   viewport height — whichever is larger wins. */
+/* YouTube API replaces the #yt-bg-player div with an iframe of the same ID.
+   We only style the iframe here. The #yt-bg-player rule is intentionally omitted
+   — an ID rule would win over this class rule and break top/left centering.
+   Cover technique: iframe is always larger than the screen so no black bars
+   appear on non-16:9 displays. 56.25vw = 9/16 of viewport width;
+   177.78vh = 16/9 of viewport height — whichever is larger wins. */
 .slide-start__video-bg iframe {
   position: absolute;
   top: 50%;

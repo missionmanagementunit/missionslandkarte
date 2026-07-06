@@ -52,7 +52,7 @@
 
   // Close automatically when navigating away from slide 2
   document.addEventListener('app:slide-changed', e => {
-    if (e.detail.from === 2) close();
+    if (e.detail.to !== 2) close();
   });
 
   // ── Grid scaffold ─────────────────────────────────────────────────────

@@ -68,11 +68,11 @@
       link:         raw.link         || '',
       // Real-world data is inconsistent about spacing around the pipe
       // ("A | B" vs "A| B"); split leniently and drop empty trailing entries.
-      keywords:     raw.keywords ? raw.keywords.split(/\s*\|\s*/).map(k => k.trim()).filter(Boolean) : [],
+      keywords:      raw.keywords ? raw.keywords.split(/\s*\|\s*/).map(k => k.trim()).filter(Boolean) : [],
+      foerderung_eur: raw.foerderung_eur ? parseInt(raw.foerderung_eur, 10) : null,
     };
 
     if (raw.type === 'pin') {
-      project.foerderung_eur  = raw.foerderung_eur  ? parseInt(raw.foerderung_eur, 10)  : null;
       project.thumbnail_path  = raw.thumbnail_path  || null;
       project.video_type      = raw.video_type       || null;
       project.video_id        = raw.video_id         || null;
