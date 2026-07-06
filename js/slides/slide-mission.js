@@ -9,11 +9,13 @@
   const MISSION_SVG       = { climate: 'Climate', cities: 'Cities', cancer: 'Cancer', soil: 'Soil', water: 'Waters' };
 
   const PIN_FLYTO_ZOOM     = 11;
-  const PIN_FLYTO_DURATION = 1.0;   // seconds
-  const TILE_OPEN_DELAY_MS = 900;   // wait after flyTo before opening the tile
+  const PIN_FLYTO_DURATION = 2.0;   // seconds
+  const TILE_OPEN_DELAY_MS = 1800;  // wait after flyTo before opening the tile
 
   const _initialized = new Set();   // mission keys already set up
   const _mapCtrls     = {};          // mission key -> map controller
+  const _pins         = {};          // mission key -> sorted pin array (set in _renderSidebar)
+  const _pinIndex     = {};          // mission key -> currently active pin index
 
   function _initMissionSlide(missionKey) {
     if (_initialized.has(missionKey)) return;
@@ -33,7 +35,13 @@
 
     const mapCtrl = APP_MAP.create(leafletId, {
       missionFilter: missionKey,
-      onPinClick: pin => _openTile(pin, mapCtrl),
+      onPinClick: pin => {
+        // Sync pin index so arrow keys continue from the clicked pin.
+        if (_pins[missionKey]) {
+          _pinIndex[missionKey] = _pins[missionKey].findIndex(p => p.id === pin.id);
+        }
+        _openTile(pin, mapCtrl);
+      },
     });
     _mapCtrls[missionKey] = mapCtrl;
 
@@ -68,6 +76,8 @@
     const pins = missionProjects
       .filter(p => p.type === 'pin')
       .sort((a, b) => (a.video_pin_order ?? 0) - (b.video_pin_order ?? 0));
+
+    _pins[missionKey] = pins; // store for keyboard navigation
 
     let html = `
       <div class="mission-sidebar-header">
@@ -109,12 +119,31 @@
 
     el.querySelectorAll('.mission-pin-item').forEach(item => {
       item.addEventListener('click', () => {
-        const pin = pins.find(p => String(p.id) === item.dataset.pinId);
-        if (!pin) return;
-        mapCtrl.flyTo(pin.lat, pin.lng, PIN_FLYTO_ZOOM, PIN_FLYTO_DURATION);
-        setTimeout(() => _openTile(pin, mapCtrl), TILE_OPEN_DELAY_MS);
+        const idx = pins.findIndex(p => String(p.id) === item.dataset.pinId);
+        if (idx === -1) return;
+        _pinIndex[missionKey] = idx; // sync for arrow key continuation
+        mapCtrl.flyTo(pins[idx].lat, pins[idx].lng, PIN_FLYTO_ZOOM, PIN_FLYTO_DURATION);
+        setTimeout(() => _openTile(pins[idx], mapCtrl), TILE_OPEN_DELAY_MS);
       });
     });
+  }
+
+  // ── Keyboard navigation (called by keyboard.js) ───────────────────────────
+
+  function _navigatePin(missionKey, delta) {
+    const pins = _pins[missionKey];
+    if (!pins || pins.length === 0) return;
+    const mapCtrl = _mapCtrls[missionKey];
+    if (!mapCtrl) return;
+
+    let idx = _pinIndex[missionKey];
+    idx = idx == null ? 0 : (idx + delta + pins.length) % pins.length;
+    _pinIndex[missionKey] = idx;
+
+    const pin = pins[idx];
+    APP_TILE.hideQuiet();  // close immediately so the flyover is visible
+    mapCtrl.flyTo(pin.lat, pin.lng, PIN_FLYTO_ZOOM, PIN_FLYTO_DURATION);
+    setTimeout(() => APP_TILE.show(pin, { onClose: () => mapCtrl.flyToHome() }), TILE_OPEN_DELAY_MS);
   }
 
   // ── Slide router hook ─────────────────────────────────────────────────────
@@ -123,5 +152,7 @@
     const missionKey = Object.keys(SLIDE_FOR_MISSION).find(k => SLIDE_FOR_MISSION[k] === e.detail.to);
     if (missionKey) _initMissionSlide(missionKey);
   });
+
+  window.APP_MISSION_NAV = { navigatePin: _navigatePin };
 
 })();

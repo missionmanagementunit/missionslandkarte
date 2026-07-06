@@ -90,6 +90,35 @@ html, body {
 .tab.active[data-mission="soil"]    { background: var(--m-soil);    }
 .tab.active[data-mission="water"]   { background: var(--m-water);   }
 
+/* ── Fullscreen button ───────────────────────────────────────────────── */
+
+.fullscreen-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--neutral-400);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.fullscreen-btn:hover {
+  background: var(--neutral-700);
+  color: var(--neutral-100);
+}
+
+.fullscreen-btn .fs-icon-exit  { display: none; }
+.fullscreen-btn .fs-icon-enter { display: block; }
+
+.fullscreen-btn[data-fullscreen="true"] .fs-icon-enter { display: none; }
+.fullscreen-btn[data-fullscreen="true"] .fs-icon-exit  { display: block; }
+
 /* ── Slides container ────────────────────────────────────────────────── */
 
 .slides-container {

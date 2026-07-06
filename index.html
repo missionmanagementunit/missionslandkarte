@@ -17,7 +17,7 @@
   <!-- Header mit Tab-Bar — auf Folie 1 ausgeblendet -->
   <header id="app-header" class="app-header hidden">
     <div class="header-logo">
-      <img src="assets/logos/FFG_Logo.svg" alt="FFG"
+      <img src="assets/logos/FFG white.png" alt="FFG"
            onerror="this.style.visibility='hidden'" />
     </div>
     <nav class="tab-bar" role="tablist" aria-label="Folien-Navigation">
@@ -28,18 +28,32 @@
       <button class="tab" data-slide="6" data-mission="soil"    role="tab">Gesunde Böden</button>
       <button class="tab" data-slide="7" data-mission="water"   role="tab">Wasser und Gewässer schützen</button>
     </nav>
+    <button id="fullscreen-btn" class="fullscreen-btn" data-fullscreen="false" title="Vollbild (F)" aria-label="Vollbild umschalten">
+      <!-- enter fullscreen: corners pointing outward -->
+      <svg class="fs-icon-enter" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">
+        <path d="M5 1H1v4M11 1h4v4M1 11v4h4M15 11v4h-4"/>
+      </svg>
+      <!-- exit fullscreen: corners pointing inward -->
+      <svg class="fs-icon-exit" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">
+        <path d="M1 5h4V1M15 5h-4V1M1 11h4v4M15 11h-4v4"/>
+      </svg>
+    </button>
   </header>
 
   <main id="slides-container" class="slides-container">
 
     <!-- Folie 1: Startseite — vollbild, kein Header, kein Sidebar -->
     <div id="slide-1" class="slide slide-start active" data-slide="1">
+      <div class="slide-start__video-bg">
+        <div id="yt-bg-player"></div>
+      </div>
+      <div class="slide-start__video-overlay"></div>
       <div class="slide-start__content">
-        <h1 class="slide-start__title">Mission Intelligence</h1>
+        <h1 class="slide-start__title"></h1>
         <p class="slide-start__subtitle">Die EU-Missionen in Österreich — Umsetzung mit Impact</p>
       </div>
       <footer class="slide-start__logo">
-        <img src="assets/logos/FFG_Logo.svg" alt="FFG"
+        <img src="assets/logos/FFG white.png" alt="FFG"
              onerror="this.style.visibility='hidden'" />
       </footer>
       <span class="slide-start__hint">Klicken zum Starten</span>
@@ -136,8 +150,11 @@
   <script src="js/components/tile.js"></script>
   <script src="js/components/chart.js"></script>
   <script src="js/map.js"></script>
+  <script src="js/fullscreen.js"></script>
+  <script src="js/slides/slide-start.js"></script>
   <script src="js/slides/slide-overview.js"></script>
   <script src="js/slides/slide-mission.js"></script>
+  <script src="js/keyboard.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
