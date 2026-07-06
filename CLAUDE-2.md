@@ -21,46 +21,51 @@
 
 ---
 
-## Dateistruktur (Phase 1 — wird in diesem Sprint angelegt)
+## Dateistruktur (Stand: Phase 5 abgeschlossen)
 
 ```
-mission-intelligence/
-├── index.html              # Einstiegspunkt, lädt die App
-├── CLAUDE.md               # Diese Datei
-├── LICENSE                 # Proprietäre Lizenz, alle Rechte FFG
-├── README.md               # Projektbeschreibung, Work-in-Progress-Hinweis
+missionslandkarte/
+├── index.html                        # Einstiegspunkt, lädt die App
+├── CLAUDE-2.md                       # Diese Datei (in .gitignore)
+├── .nojekyll                         # Verhindert Jekyll-Verarbeitung auf GitHub Pages
+├── .gitignore                        # Ignoriert CLAUDE*.md, .DS_Store, *.code-workspace
+├── .github/
+│   └── workflows/
+│       └── deploy.yml                # GitHub Actions Deployment-Workflow
 ├── assets/
 │   ├── logos/
-│   │   ├── FFG_Logo.svg              # FFG-Logo (weiß/transparent)
-│   │   ├── 5Missions_flower.svg      # Missionsblume (alle 5)
+│   │   ├── FFG white.png             # FFG-Logo weiß (PNG) — verwendet in Header + Folie 1
+│   │   ├── FFG_Logo.svg              # FFG-Logo dunkel (nicht mehr verwendet)
+│   │   ├── 5Missions_flower.svg      # Missionsblume — Text als Pfade (kein Font-Problem)
 │   │   ├── Mission_Climate.svg       # Klimawandel meistern
 │   │   ├── Mission_Cities.svg        # Klimaneutrale Stadt
 │   │   ├── Mission_Cancer.svg        # Krebs besiegen
 │   │   ├── Mission_Soil.svg          # Gesunde Böden
 │   │   └── Mission_Waters.svg        # Wasser und Gewässer
-│   ├── thumbnails/
-│   │   └── [projektname].jpg         # Thumbnails für Missionspins (15 Stück)
-│   └── fonts/                        # Asap-Schriftfamilie (lokal, Fallback)
+│   └── thumbnails/
+│       └── [projektname].[ext]       # 15 Thumbnails (jpg/png/webp)
 ├── data/
-│   ├── projects.csv                  # Projektdaten (Schema siehe unten)
-│   └── config.js                     # Konfiguration (Charts, Stat Cards, Video-IDs)
+│   ├── projects.csv                  # Projektdaten — 1193 Zeilen, 16 Spalten
+│   └── config.js                     # Konfiguration (Video-IDs, Charts, Missions-Labels)
 ├── css/
 │   ├── tokens.css                    # Design Tokens (Farben, Schriften, Abstände)
-│   ├── layout.css                    # Grundlayout (Header, Sidebar, Map-Container)
-│   └── slides.css                    # Folien-spezifische Styles + Übergänge
+│   ├── layout.css                    # Grundlayout + Fullscreen-Button
+│   └── slides.css                    # Folien-Styles, Übergänge, Fly-in, Tile-Modal
 └── js/
-    ├── app.js                        # Einstieg, Router, Folien-Orchestrierung
-    ├── data.js                       # CSV-Loader, Datenmodell
-    ├── map.js                        # Leaflet-Karte, Pins, Animationen
+    ├── app.js                        # Router, Swoosh-Übergang, Tab-Navigation
+    ├── data.js                       # CSV-Loader, Datenmodell, MISSION_ALIASES
+    ├── map.js                        # Leaflet-Karte Factory (APP_MAP.create)
+    ├── youtube.js                    # YouTube IFrame API Wrapper
+    ├── fullscreen.js                 # Vollbild-Toggle (F-Taste + Button)
+    ├── keyboard.js                   # Tastatur-Navigation (Zahlen + Pfeiltasten)
     ├── slides/
-    │   ├── slide-start.js            # Folie 1: Startseite
+    │   ├── slide-start.js            # Folie 1: Typewriter + Hintergrundvideo
     │   ├── slide-overview.js         # Folie 2: Gesamtübersicht
-    │   └── slide-mission.js          # Folien 3–7: Missionsseiten (generisch)
-    ├── components/
-    │   ├── tile.js                   # Kachel-Komponente (Missionspin)
-    │   ├── chart.js                  # Balken-/Kreisdiagramme
-    │   └── legend.js                 # Sidebar-Legende
-    └── youtube.js                    # YouTube IFrame API Wrapper
+    │   └── slide-mission.js          # Folien 3–7: Missionsseiten (APP_MISSION_NAV)
+    └── components/
+        ├── tile.js                   # Kachel-Modal (Foto + Video, APP_TILE)
+        ├── chart.js                  # Statistik-Panel (derzeit deaktiviert)
+        └── legend.js                 # Sidebar-Legende (Mission/Bundesland-Toggle)
 ```
 
 ---
@@ -134,7 +139,8 @@ Inhalte die sich ändern können ohne den Code anzufassen, werden hier gepflegt 
 window.APP_CONFIG = {
 
   // Hintergrundvideo der Startseite (YouTube Video-ID)
-  startVideoId: 'xjCXpfE01yc',
+  // Aktuell: KING-Projekt Graz — bei Bedarf hier austauschen
+  startVideoId: 'Tw96q4yA7uc',
 
   // Übersichtsfolie: Statistik-Panel
   // Steuerung welche Datenfelder und Diagramme auf Folie 2 angezeigt werden.
@@ -365,82 +371,42 @@ function openVideoFullscreen(videoId) {
 
 ## Phasenplan
 
-### Phase 1 — Fundament (aktueller Sprint)
-**Ziel:** Claudio kann parallel Daten eingeben, Claude Code baut die Infrastruktur
+### Phase 1 — Fundament ✅ abgeschlossen
+- Dateistruktur, Design Tokens, CSV-Loader, 7-Folien-Router, Swoosh-Übergang
 
-Aufgaben:
-- [ ] `LICENSE` mit folgendem Inhalt anlegen:
+### Phase 2 — Übersichtskarte ✅ abgeschlossen
+- Leaflet-Karte (CartoDB Positron), Österreich-Maske, Bundesländergrenzen
+- Missionspins (SVG-Icons) + Missionspunkte (Pie-Chart-Kreise)
+- Spider-Fan bei geclusterten Pins, Z-Index-Fix (Pins immer über Punkten)
+- Fly-in-Animation (opacity+scale, Gate: Tiles geladen + 800ms Minimum)
+- Sidebar: Mission/Bundesland-Toggle + Filter
+- Tile-Modal (Foto-Version)
 
-```
-Copyright (c) 2026 FFG – Österreichische Forschungsförderungsgesellschaft mbH
-Alle Rechte vorbehalten.
+### Phase 3 — Missionsseiten ✅ abgeschlossen
+- Generische `slide-mission`-Komponente für Folien 3–7
+- Map-Factory (`APP_MAP.create`) für 6 unabhängige Leaflet-Instanzen
+- Sidebar: Pins sortiert nach `video_pin_order`, Thumbnail-Vorschau
+- FlyTo bei Sidebar-/Karten-Klick (2s, dann Tile öffnen nach 1.8s)
+- Tile-Video-Version: YouTube IFrame API, synchrones `requestFullscreen()`
+- Fly-Back zu Ausgangsansicht beim Tile-Schließen
 
-Dieses Repository und sein Inhalt – einschließlich Code, Daten, Grafiken und Logos –
-sind Eigentum der FFG. Eine Vervielfältigung, Weitergabe oder Nutzung in jeglicher
-Form ohne ausdrückliche schriftliche Genehmigung der FFG ist untersagt.
+### Phase 4 — Startseite ✅ abgeschlossen
+- Typewriter-Effekt auf Titel (loop: tippen → Pause → löschen → repeat)
+- YouTube-Hintergrundvideo (muted, autoplay, loop, 80% gedimmt)
+- Untertitel deaktiviert via `player.unloadModule('captions')`
+- Swoosh-Übergang bei Klick bereits in Phase 1 implementiert
 
-All rights reserved. No part of this repository may be reproduced, distributed,
-or used in any form without explicit written permission from FFG.
-```
-
-- [ ] `README.md` mit folgendem Inhalt anlegen:
-
-```markdown
-# Mission Intelligence
-
-**Interaktive Präsentation der EU-Missionen in Österreich**
-
-Entwickelt von der FFG (Österreichische Forschungsförderungsgesellschaft)
-für die Jahrestagung Missionsorientierte Innovationspolitik 2026.
-
----
-
-⚠️ **Work in Progress** — Dieses Projekt befindet sich in aktiver Entwicklung.
-Inhalte und Daten sind vorläufig und nicht als finale Aussagen der FFG zu verstehen.
-
----
-
-Für Rückfragen: [ffg.at](https://www.ffg.at)
-```
-
-- [ ] Dateistruktur anlegen (alle Ordner, leere Dateien mit Platzhaltern)
-- [ ] `tokens.css` mit allen Design Tokens
-- [ ] `data/config.js` mit allen Konfigurationswerten (Charts deaktiviert als Platzhalter, Stat Cards leer)
-- [ ] `data/projects.csv` mit Beispieldaten (3–5 Zeilen, validiertes Schema)
-- [ ] `data.js`: CSV einlesen (Semikolon-getrennt, Dezimalkomma), parsen, validieren, Datenmodell aufbauen; unbekannte Spalten ignorieren (Erweiterbarkeit)
-- [ ] `app.js`: Router mit 7 Folien, Tab-Navigation, Swoosh-Übergang (CSS-basiert)
-- [ ] `layout.css`: Header, Tab-Bar, Sidebar, Map-Container
-- [ ] Statischer Shell: Alle 7 Folien-Container im DOM, nur aktive sichtbar
-- [ ] README.md mit Setup-Anleitung (GitHub Pages, Daten befüllen)
-
-**Abnahmekriterium:** Die 7 Folien sind durch Tabs navigierbar, Swoosh-Übergang funktioniert, CSV wird korrekt eingelesen und in der Browser-Konsole geloggt.
-
-### Phase 2 — Übersichtskarte
-- [ ] Leaflet-Karte mit Österreich-Maske (aus Piloten migrieren)
-- [ ] Missionspins (Pentagon-Icons) und Missionspunkte (Kreise) rendern
-- [ ] Einflug-Animation beim ersten Öffnen
-- [ ] Sidebar: Missions-/Bundesland-Toggle + Filter
-- [ ] Popup/Kachel für Missionspins (Foto-Version)
-- [ ] Balkendiagramme (Chart.js oder D3, klein)
-- [ ] Fördermittel-Summe
-
-### Phase 3 — Missionsseiten
-- [ ] Generische `slide-mission` Komponente
-- [ ] Missionsfilter auf Karte
-- [ ] Sidebar-Projektliste mit Fly-to-Animation
-- [ ] Kachel Video-Version (YouTube IFrame API + Fullscreen)
-
-### Phase 4 — Startseite
-- [ ] Typewriter-Effekt (loop)
-- [ ] YouTube Hintergrundvideo (muted, autoplay, loop, gedimmt)
-- [ ] Swoosh-Übergang bei Klick
-
-### Phase 5 — Finalisierung
-- [ ] Offline-Fallback wenn Kacheln nicht laden
-- [ ] Keyboard-Navigation (Pfeiltasten zwischen Folien)
-- [ ] Vollbild-Modus (F11 oder Button)
+### Phase 5 — Finalisierung (Stand: Juli 2026)
+- ✅ Keyboard-Navigation:
+  - Coverfolie: Pfeil rechts → Übersicht
+  - Folien 2–7: Zahlentasten 1–5 → Missionsfolie 3–7
+  - Missionsfolien: Pfeiltasten ← → ↑ ↓ → Pin-Navigation (flyTo + Tile öffnet sich)
+- ✅ Vollbild-Modus: F-Taste + Button oben rechts im Header, Icon wechselt
+- ✅ GitHub Pages Deployment: https://missionmanagementunit.github.io/missionslandkarte/
+  - Workflow: `.github/workflows/deploy.yml` (Actions-basiert, nicht legacy)
+  - Auto-Deploy bei jedem Push auf `main`
+- [ ] Offline-Fallback wenn Kartenkacheln nicht laden
 - [ ] Test auf Veranstaltungsrechner (Windows, Chrome)
-- [ ] GitHub Pages Deployment-Check
 
 ---
 
@@ -448,13 +414,15 @@ Für Rückfragen: [ffg.at](https://www.ffg.at)
 
 | Punkt | Status | Verantwortlich |
 |---|---|---|
-| Klagenfurt Video-ID `r1OBDsP123s` | Verdächtig, prüfen | Claudio |
+| Klagenfurt Video-ID `r1OBDsP123s` | Verdächtig, prüfen ob korrekt | Claudio |
 | GPS-Koordinaten aller Projekte | Nicht verifiziert | Claudio |
-| FFG Logo (SVG mit korrektem Text) | Aktuell nur Symbol sichtbar | Claudio (IT/Brand anfragen) |
-| Thumbnails für 15 Missionspins | Noch nicht beschafft | Claudio |
+| FFG Logo | ✅ Gelöst: `FFG white.png` ersetzt SVG | — |
+| Thumbnails 15 Missionspins | ✅ Neue Projektfotos eingebunden | — |
+| 5Missions_flower.svg Font | ✅ Text zu Pfaden konvertiert | — |
+| Thumbnail-Pfade (3 kaputte) | ✅ In projects.csv korrigiert (Danube4All, UNCAN, Tumorzentrum, DECO2) | — |
 | Werbung auf YouTube-Videos | YouTube Studio → Monetarisierung deaktivieren | Claudio |
-| Tabs auf Startseite | Nicht sichtbar (Entscheidung) | ✓ |
-| Fördermittel-Vollständigkeit | Partiell, Schwellenwert 50% | ✓ |
+| Offline-Fallback Kartenkacheln | Noch nicht implementiert | — |
+| Test Windows/Chrome (Veranstaltungsrechner) | Noch ausstehend | Claudio |
 
 ---
 
