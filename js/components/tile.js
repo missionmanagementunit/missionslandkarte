@@ -34,7 +34,11 @@
 
     _overlay.innerHTML = _buildCard(project);
     _overlay.classList.add('visible');
-    _overlay.querySelector('.tile-close').addEventListener('click', hide);
+
+    const closeBtn = _overlay.querySelector('.tile-close');
+    closeBtn?.addEventListener('click', hide);
+    // Focus the close button so keyboard events reach document (not Leaflet map or YouTube iframe)
+    closeBtn?.focus();
 
     if (_isVideo(project)) {
       const elementId = _playerElementId(project);
@@ -82,6 +86,14 @@
 
   // Close on backdrop click
   _overlay.addEventListener('click', e => { if (e.target === _overlay) hide(); });
+
+  // YouTube iframes steal keyboard focus during player init, which swallows keydown
+  // events before they reach document. Redirect focus back to the close button.
+  _overlay.addEventListener('focusin', e => {
+    if (e.target.tagName === 'IFRAME' && _activeProject) {
+      _overlay.querySelector('.tile-close')?.focus();
+    }
+  });
 
   function _isVideo(p) {
     return !!(p && p.video_type === 'youtube' && p.video_id);
