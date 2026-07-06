@@ -88,6 +88,36 @@
     }
   }
 
-  window.APP_YOUTUBE = { preparePlayer, openVideoFullscreen, stopVideo, destroyPlayer };
+  /** Creates a muted, autoplaying, looping background player — for Folie 1. */
+  function createBackgroundPlayer(elementId, videoId) {
+    _whenApiReady(() => {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      new YT.Player(elementId, {
+        videoId,
+        playerVars: {
+          autoplay:       1,
+          mute:           1,
+          loop:           1,
+          playlist:       videoId, // required for loop to work
+          controls:       0,
+          rel:            0,
+          iv_load_policy: 3,
+          modestbranding: 1,
+          playsinline:    1,
+          disablekb:      1,
+          cc_load_policy: 0,       // disable closed captions
+        },
+        events: {
+          onReady: e => {
+            e.target.playVideo();
+            e.target.unloadModule('captions');  // disable subtitles/captions
+          },
+        },
+      });
+    });
+  }
+
+  window.APP_YOUTUBE = { preparePlayer, openVideoFullscreen, stopVideo, destroyPlayer, createBackgroundPlayer };
 
 })();

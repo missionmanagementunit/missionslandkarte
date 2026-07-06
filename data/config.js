@@ -5,7 +5,7 @@
 window.APP_CONFIG = {
 
   // Hintergrundvideo der Startseite (YouTube Video-ID)
-  startVideoId: 'xjCXpfE01yc',
+  startVideoId: 'Tw96q4yA7uc',
 
   // Übersichtsfolie: Statistik-Panel
   // Steuerung welche Datenfelder und Diagramme auf Folie 2 angezeigt werden.

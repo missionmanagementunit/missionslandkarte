@@ -22,6 +22,12 @@
 
   /** Shows the tile for a project. options.onClose fires once, when the tile is hidden. */
   function show(project, options) {
+    // Clean up any previously open video player before replacing the tile.
+    if (_activeProject && _isVideo(_activeProject)) {
+      APP_YOUTUBE.stopVideo(_playerElementId(_activeProject));
+      APP_YOUTUBE.destroyPlayer(_playerElementId(_activeProject));
+    }
+
     options = options || {};
     _activeProject    = project;
     _onCloseCallback  = options.onClose || null;
@@ -51,6 +57,19 @@
     _activeProject   = null;
     _onCloseCallback = null;
     if (cb) cb();
+  }
+
+  // Closes the tile without firing onClose — used by keyboard navigation so
+  // flyToHome is not triggered when immediately navigating to the next pin.
+  function hideQuiet() {
+    if (_isVideo(_activeProject)) {
+      const elementId = _playerElementId(_activeProject);
+      APP_YOUTUBE.stopVideo(elementId);
+      APP_YOUTUBE.destroyPlayer(elementId);
+    }
+    _overlay.classList.remove('visible');
+    _activeProject   = null;
+    _onCloseCallback = null;
   }
 
   // Close on backdrop click
@@ -124,6 +143,6 @@
       .replace(/"/g, '&quot;');
   }
 
-  window.APP_TILE = { show, hide };
+  window.APP_TILE = { show, hide, hideQuiet };
 
 })();

@@ -68,6 +68,48 @@
   font-size: 13px;
 }
 
+/* ── Slide 1: Video background ───────────────────────────────────────── */
+
+.slide-start__video-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* YT API replaces the placeholder div with an <iframe> in place */
+.slide-start__video-bg iframe,
+#yt-bg-player {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border: none;
+  pointer-events: none;
+}
+
+.slide-start__video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(26, 20, 16, 0.80);
+  pointer-events: none;
+}
+
+/* Typewriter cursor — blinking pipe appended to the title */
+.slide-start__title::after {
+  content: '|';
+  font-weight: 300;
+  animation: blink-cursor 0.8s step-end infinite;
+}
+
+@keyframes blink-cursor {
+  50% { opacity: 0; }
+}
+
 /* ── Leaflet marker overrides ────────────────────────────────────────── */
 
 /* Remove Leaflet's default white box shadow from div icons */
