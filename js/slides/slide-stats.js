@@ -282,7 +282,7 @@
   }
 
   function _aggregate(projects) {
-    const pins = projects.filter(p => p.type === 'pin');
+    const pins = projects.filter(p => p.type === 'point');
     const totalFunding        = pins.reduce((s, p) => s + (p.foerderung_eur || 0), 0);
     const byMission           = {};
     const byBundesland        = {};
