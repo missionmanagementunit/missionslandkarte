@@ -9,6 +9,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write
 
 concurrency:
   group: pages
@@ -22,6 +23,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Re-runs would leave a stale "github-pages" artifact from the previous
+      # attempt, causing deploy-pages to fail with "Multiple artifacts found".
+      # Delete any such leftovers before uploading the fresh artifact.
+      - name: Delete stale github-pages artifacts
+        run: |
+          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+            --jq '.artifacts[] | select(.name=="github-pages") | .id' | \
+          while read -r id; do
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" || true
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
