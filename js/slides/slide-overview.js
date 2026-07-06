@@ -16,16 +16,16 @@
     });
     mapContainer.appendChild(mapDiv);
 
-    APP_MAP.initMap('leaflet-overview');
+    const mapCtrl = APP_MAP.create('leaflet-overview');
 
     // Leaflet needs a size recalculation after the slide's CSS transition ends.
-    setTimeout(() => APP_MAP.invalidateSize(), 660);
+    setTimeout(() => mapCtrl.invalidateSize(), 660);
 
     // ── Data-dependent setup
     function _setup() {
       const projects = window.APP_DATA?.projects || [];
-      APP_LEGEND.init('sidebar-overview', projects, filter => APP_MAP.setFilter(filter));
-      APP_MAP.renderMarkers(null);
+      APP_LEGEND.init('sidebar-overview', projects, filter => mapCtrl.setFilter(filter));
+      mapCtrl.renderMarkers(null);
       APP_STATS.init('stats-overview', projects);
     }
 
@@ -35,7 +35,7 @@
       document.addEventListener('app:data-ready', _setup, { once: true });
     }
 
-    // ── Tile modal
+    // ── Tile modal (no onClose fly-back on the overview — only mission slides do that)
     document.addEventListener('map:pin-click', e => APP_TILE.show(e.detail.project));
   }
 

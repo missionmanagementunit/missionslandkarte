@@ -1,5 +1,6 @@
-// Tile modal (photo version) for Missionspins.
-// Video version with YouTube IFrame API is Phase 4.
+// Tile modal for Missionspins — photo version (Phase 2) and video version (Phase 3).
+// Video tiles embed a YouTube IFrame player behind a play-button overlay; clicking
+// it triggers fullscreen synchronously via APP_YOUTUBE (see js/youtube.js).
 
 (function () {
   'use strict';
@@ -16,21 +17,52 @@
   };
 
   const _overlay = document.getElementById('tile-overlay');
+  let _activeProject = null;
+  let _onCloseCallback = null;
 
-  function show(project) {
+  /** Shows the tile for a project. options.onClose fires once, when the tile is hidden. */
+  function show(project, options) {
+    options = options || {};
+    _activeProject    = project;
+    _onCloseCallback  = options.onClose || null;
+
     _overlay.innerHTML = _buildCard(project);
     _overlay.classList.add('visible');
+    _overlay.querySelector('.tile-close').addEventListener('click', hide);
 
-    _overlay.querySelector('.tile-close')
-      .addEventListener('click', hide);
+    if (_isVideo(project)) {
+      const elementId = _playerElementId(project);
+      APP_YOUTUBE.preparePlayer(elementId, project.video_id);
+      _overlay.querySelector('.tile-play-overlay')
+        ?.addEventListener('click', () => APP_YOUTUBE.openVideoFullscreen(elementId));
+    }
   }
 
   function hide() {
+    if (_isVideo(_activeProject)) {
+      const elementId = _playerElementId(_activeProject);
+      APP_YOUTUBE.stopVideo(elementId);
+      APP_YOUTUBE.destroyPlayer(elementId);
+    }
+
     _overlay.classList.remove('visible');
+
+    const cb = _onCloseCallback;
+    _activeProject   = null;
+    _onCloseCallback = null;
+    if (cb) cb();
   }
 
   // Close on backdrop click
   _overlay.addEventListener('click', e => { if (e.target === _overlay) hide(); });
+
+  function _isVideo(p) {
+    return !!(p && p.video_type === 'youtube' && p.video_id);
+  }
+
+  function _playerElementId(p) {
+    return `yt-player-${p.id}`;
+  }
 
   // ── Card HTML ─────────────────────────────────────────────────────────
 
@@ -38,18 +70,26 @@
     const missionLabel = MISSION_LABELS[p.mission] || p.mission;
     const missionSvg   = `assets/logos/Mission_${MISSION_SVG[p.mission] || 'Climate'}.svg`;
 
-    const thumbnailHtml = p.thumbnail_path
-      ? `<img class="tile-thumbnail" src="${p.thumbnail_path}" alt="${_esc(p.name)}"
-              onerror="this.classList.add('tile-thumbnail--placeholder')">`
-      : `<div class="tile-thumbnail tile-thumbnail--placeholder"></div>`;
+    const mediaHtml = _isVideo(p)
+      ? `<div class="tile-thumbnail-wrap">
+           <div id="${_playerElementId(p)}" class="tile-yt-player"></div>
+           <button class="tile-play-overlay" aria-label="Video abspielen">
+             <img src="https://img.youtube.com/vi/${p.video_id}/hqdefault.jpg" alt="${_esc(p.name)}">
+             <span class="tile-play-icon">&#9658;</span>
+           </button>
+         </div>`
+      : (p.thumbnail_path
+          ? `<img class="tile-thumbnail" src="${p.thumbnail_path}" alt="${_esc(p.name)}"
+                  onerror="this.classList.add('tile-thumbnail--placeholder')">`
+          : `<div class="tile-thumbnail tile-thumbnail--placeholder"></div>`);
 
     const keywordsHtml = p.keywords?.length
       ? `<div class="tile-keywords">${p.keywords.map(k => `<span class="tile-kw">${_esc(k)}</span>`).join('')}</div>`
       : '';
 
     const fundingHtml = p.foerderung_eur
-      ? `<div class="tile-funding">€ ${(p.foerderung_eur / 1_000_000)
-          .toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mio. Förderung</div>`
+      ? `<div class="tile-funding">€ ${(p.foerderung_eur / 1_000_000)
+          .toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mio. Förderung</div>`
       : '';
 
     const linkHtml = p.link
@@ -59,7 +99,7 @@
     return `
       <div class="tile-card">
         <button class="tile-close" aria-label="Schließen">&#x2715;</button>
-        ${thumbnailHtml}
+        ${mediaHtml}
         <div class="tile-body">
           <div class="tile-mission-row">
             <img src="${missionSvg}" class="tile-mission-icon" width="28" height="28" draggable="false">
