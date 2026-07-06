@@ -42,6 +42,22 @@
 
     if (_isVideo(project)) {
       const elementId = _playerElementId(project);
+
+      // As soon as YouTube adds the <iframe> to the DOM, mark it non-focusable so it
+      // cannot swallow keyboard events (cross-origin iframes don't bubble keydown to parent).
+      const playerDiv = document.getElementById(elementId);
+      if (playerDiv) {
+        const mo = new MutationObserver(() => {
+          const iframe = playerDiv.querySelector('iframe');
+          if (iframe) {
+            iframe.setAttribute('tabindex', '-1');
+            closeBtn?.focus();
+            mo.disconnect();
+          }
+        });
+        mo.observe(playerDiv, { childList: true, subtree: true });
+      }
+
       APP_YOUTUBE.preparePlayer(elementId, project.video_id);
       _overlay.querySelector('.tile-play-overlay')
         ?.addEventListener('click', () => APP_YOUTUBE.openVideoFullscreen(elementId));
