@@ -112,7 +112,12 @@
         events: {
           onReady: e => {
             e.target.playVideo();
-            e.target.unloadModule('captions');  // disable subtitles/captions
+            e.target.unloadModule('captions');
+          },
+          // onReady fires before YouTube loads the captions module — unload again
+          // the moment playback starts to catch late-loaded caption tracks.
+          onStateChange: e => {
+            if (e.data === YT.PlayerState.PLAYING) e.target.unloadModule('captions');
           },
         },
       });
