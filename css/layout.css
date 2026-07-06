@@ -145,13 +145,14 @@ html, body {
   padding: 0;
 }
 
-/* Right-side area: map + optional stats panel stacked vertically */
+/* Right-side area: map + stats panel overlay */
 .slide-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
+  position: relative;
 }
 
 .slide-main .map-container {

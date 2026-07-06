@@ -78,15 +78,26 @@
   pointer-events: none;
 }
 
-/* YT API replaces the placeholder div with an <iframe> in place */
-.slide-start__video-bg iframe,
+/* YT API injects the <iframe> inside #yt-bg-player */
 #yt-bg-player {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Cover technique: iframe is always larger than the screen so no black bars
+   appear on non-16:9 displays. The overflow is clipped by the parent's
+   overflow:hidden. 56.25vw = 9/16 of viewport width; 177.78vh = 16/9 of
+   viewport height — whichever is larger wins. */
+.slide-start__video-bg iframe {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 56.25vw;
+  min-width: 177.78vh;
+  min-height: 100vh;
   border: none;
   pointer-events: none;
 }
@@ -155,46 +166,131 @@
 
 /* ── Stats panel ─────────────────────────────────────────────────────── */
 
-.stats-panel {
-  display: none;                   /* hidden until chart.js enables it */
-  flex-shrink: 0;
-  background: var(--neutral-800);
-  border-top: 1px solid var(--neutral-700);
-  padding: 12px 16px;
-  gap: 16px;
+/* ── Stats hint bar — always visible at the bottom of the map on slide 2 ── */
+
+.stats-hint-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 48px;
+  padding: 20px 24px 18px;
+  background: linear-gradient(to top, rgba(17, 17, 17, 0.75) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.stats-hint-icon {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  overflow-x: auto;
+  gap: 6px;
+  color: white;
+  opacity: 0.65;
+}
+
+.stats-hint-icon svg {
+  width: 30px;
+  height: 30px;
+  stroke: white;
+}
+
+.stats-hint-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+}
+
+/* ── Stats panel — full overlay over .slide-main ── */
+
+.stats-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: var(--neutral-900);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 28px 24px;
+  gap: 0;
+  transform: translateY(100%);
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .stats-panel.visible {
-  display: flex;
+  transform: translateY(0);
 }
 
-.stat-card {
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+.stats-card {
+  background: var(--neutral-800);
+  border-radius: 10px;
+  padding: 18px 20px 16px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  min-height: 0;
+}
+
+.stats-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stats-card-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--neutral-400);
   flex-shrink: 0;
 }
 
-.stat-value {
-  font-size: 22px;
-  font-weight: var(--font-weight-bold);
+.stats-card-content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-card-content canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* Count-up total */
+.stats-total-value {
+  font-size: 52px;
+  font-weight: 700;
   color: white;
   line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
 }
 
-.stat-label {
-  font-size: 11px;
+.stats-total-unit {
+  font-size: 22px;
+  font-weight: 400;
   color: var(--neutral-400);
-  white-space: nowrap;
-}
-
-.stats-chart-placeholder {
-  font-size: 12px;
-  color: var(--neutral-500);
-  font-style: italic;
+  margin-left: 4px;
 }
 
 /* ── Sidebar legend ──────────────────────────────────────────────────── */

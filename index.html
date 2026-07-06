@@ -69,9 +69,32 @@
           <div class="map-container" id="map-overview">
             <!-- Leaflet map injected by slide-overview.js -->
           </div>
-          <div class="stats-panel" id="stats-overview">
-            <!-- populated by chart.js; hidden until APP_CONFIG enables content -->
+          <!-- Hint bar: three icons that signal the stats panel can be expanded -->
+          <div class="stats-hint-bar" id="stats-hint-overview">
+            <div class="stats-hint-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 10h10M4 14h7M14 6c0 0-1.5-2-4-2C6.5 4 4 6.7 4 10s2.5 6 6 6c2.5 0 4-2 4-2"/>
+              </svg>
+              <span class="stats-hint-label">Fördervolumen</span>
+            </div>
+            <div class="stats-hint-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+              </svg>
+              <span class="stats-hint-label">Pro Mission</span>
+            </div>
+            <div class="stats-hint-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                <line x1="8" y1="2" x2="8" y2="18"/>
+                <line x1="16" y1="6" x2="16" y2="22"/>
+              </svg>
+              <span class="stats-hint-label">Pro Bundesland</span>
+            </div>
           </div>
+          <!-- Stats panel: slides up on right-arrow to cover the map -->
+          <div class="stats-panel" id="stats-overview"></div>
         </div>
       </div>
     </div>
@@ -142,6 +165,7 @@
   <div id="tile-overlay" class="tile-overlay" role="dialog" aria-modal="true"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="data/config.js"></script>
   <script src="js/data.js"></script>
@@ -153,6 +177,7 @@
   <script src="js/fullscreen.js"></script>
   <script src="js/slides/slide-start.js"></script>
   <script src="js/slides/slide-overview.js"></script>
+  <script src="js/slides/slide-stats.js"></script>
   <script src="js/slides/slide-mission.js"></script>
   <script src="js/keyboard.js"></script>
   <script src="js/app.js"></script>
