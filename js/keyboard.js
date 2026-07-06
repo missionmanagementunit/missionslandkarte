@@ -1,6 +1,8 @@
 // Keyboard navigation for Mission Intelligence.
 // Overview (Folie 2): number keys 1–5 jump to mission slides 3–7.
 // Mission slides (Folien 3–7): arrow keys cycle through pins (flyTo + tile opens).
+// Video tiles: right arrow starts fullscreen playback when the video tile is open.
+// Number keys 1–5 also work while a tile is open — they close it first.
 
 (function () {
   'use strict';
@@ -31,18 +33,21 @@
       return;
     }
 
-    // Folien 2–7: Zahlentasten 1–5 → Missionsfolie
+    // Folien 2–7: Zahlentasten 1–5 → Missionsfolie (Tile vorher schließen falls offen)
     if (_currentSlide >= 2 && SLIDE_FOR_NUMBER[key]) {
       e.preventDefault();
+      APP_TILE.hideQuiet();
       APP_ROUTER.goToSlide(SLIDE_FOR_NUMBER[key]);
       return;
     }
 
-    // Missionsfolien: Pfeiltasten → Pin-Navigation
+    // Missionsfolien: Pfeiltasten → Pin-Navigation oder Video starten
     const missionKey = MISSION_FOR_SLIDE[_currentSlide];
     if (missionKey) {
       if (key === 'ArrowRight' || key === 'ArrowDown') {
         e.preventDefault();
+        // If a video tile is currently open, right arrow starts the video
+        if (APP_TILE.openActiveVideo()) return;
         APP_MISSION_NAV.navigatePin(missionKey, 1);
       } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
         e.preventDefault();

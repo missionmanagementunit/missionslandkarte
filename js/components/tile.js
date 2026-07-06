@@ -72,6 +72,14 @@
     _onCloseCallback = null;
   }
 
+  // Starts fullscreen playback if the currently open tile is a video tile.
+  // Returns true if a video was started, false otherwise.
+  function openActiveVideo() {
+    if (!_activeProject || !_isVideo(_activeProject)) return false;
+    APP_YOUTUBE.openVideoFullscreen(_playerElementId(_activeProject));
+    return true;
+  }
+
   // Close on backdrop click
   _overlay.addEventListener('click', e => { if (e.target === _overlay) hide(); });
 
@@ -107,8 +115,7 @@
       : '';
 
     const fundingHtml = p.foerderung_eur
-      ? `<div class="tile-funding">€ ${(p.foerderung_eur / 1_000_000)
-          .toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mio. Förderung</div>`
+      ? `<div class="tile-funding">${_formatFunding(p.foerderung_eur)}</div>`
       : '';
 
     const linkHtml = p.link
@@ -135,6 +142,13 @@
     `;
   }
 
+  function _formatFunding(eur) {
+    if (eur >= 1_000_000) {
+      return `€ ${(eur / 1_000_000).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mio. Förderung`;
+    }
+    return `€ ${Math.round(eur).toLocaleString('de-AT')} Förderung`;
+  }
+
   function _esc(str) {
     return String(str ?? '')
       .replace(/&/g, '&amp;')
@@ -143,6 +157,6 @@
       .replace(/"/g, '&quot;');
   }
 
-  window.APP_TILE = { show, hide, hideQuiet };
+  window.APP_TILE = { show, hide, hideQuiet, openActiveVideo };
 
 })();
