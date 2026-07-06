@@ -33,12 +33,27 @@
       return;
     }
 
-    // Folien 2–7: Zahlentasten 1–5 → Missionsfolie (Tile vorher schließen falls offen)
+    // Folien 2–7: Zahlentasten 1–5 → Missionsfolie (Tile/Stats vorher schließen)
     if (_currentSlide >= 2 && SLIDE_FOR_NUMBER[key]) {
       e.preventDefault();
       APP_TILE.hideQuiet();
+      if (_currentSlide === 2) APP_STATS_PANEL.close();
       APP_ROUTER.goToSlide(SLIDE_FOR_NUMBER[key]);
       return;
+    }
+
+    // Folie 2: Pfeiltasten öffnen/schließen das Stats-Panel schrittweise
+    if (_currentSlide === 2) {
+      if (key === 'ArrowRight' || key === 'ArrowDown') {
+        e.preventDefault();
+        APP_STATS_PANEL.nextStep();
+        return;
+      }
+      if (key === 'ArrowLeft' || key === 'ArrowUp') {
+        e.preventDefault();
+        APP_STATS_PANEL.prevStep();
+        return;
+      }
     }
 
     // Missionsfolien: Pfeiltasten → Pin-Navigation oder Video starten

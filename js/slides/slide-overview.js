@@ -26,7 +26,7 @@
       const projects = window.APP_DATA?.projects || [];
       APP_LEGEND.init('sidebar-overview', projects, filter => mapCtrl.setFilter(filter));
       mapCtrl.renderMarkers(null);
-      APP_STATS.init('stats-overview', projects);
+      APP_STATS_PANEL.init('stats-overview', projects);
     }
 
     if (window.APP_DATA) {
