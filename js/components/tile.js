@@ -103,14 +103,6 @@
   // Close on backdrop click
   _overlay.addEventListener('click', e => { if (e.target === _overlay) hide(); });
 
-  // YouTube iframes steal keyboard focus during player init, which swallows keydown
-  // events before they reach document. Redirect focus back to the close button.
-  _overlay.addEventListener('focusin', e => {
-    if (e.target.tagName === 'IFRAME' && _activeProject) {
-      _overlay.querySelector('.tile-close')?.focus();
-    }
-  });
-
   function _isVideo(p) {
     return !!(p && p.video_type === 'youtube' && p.video_id);
   }
