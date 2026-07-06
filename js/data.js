@@ -10,6 +10,10 @@
   const VALID_TYPES    = new Set(['pin', 'point']);
   const VALID_MISSIONS = new Set(['climate', 'cities', 'cancer', 'soil', 'water']);
 
+  // Real-world CORDIS exports use the plural "waters" as the mission category;
+  // the rest of the app (config.js, map.js, tile.js, legend.js) keys on "water".
+  const MISSION_ALIASES = { waters: 'water' };
+
   /** Split a semicolon-delimited line, respecting double-quoted fields. */
   function splitLine(line) {
     const fields = [];
@@ -41,7 +45,9 @@
 
   /** Convert a raw row into a typed project record; returns null for invalid rows. */
   function toProject(raw) {
-    if (!raw.id || !VALID_TYPES.has(raw.type) || !VALID_MISSIONS.has(raw.mission)) {
+    const mission = MISSION_ALIASES[raw.mission] || raw.mission;
+
+    if (!raw.id || !VALID_TYPES.has(raw.type) || !VALID_MISSIONS.has(mission)) {
       console.warn('[data.js] Ungültige Zeile übersprungen:', raw);
       return null;
     }
@@ -52,7 +58,7 @@
     const project = {
       id:           raw.id,
       type:         raw.type,
-      mission:      raw.mission,
+      mission,
       name:         raw.name         || '',
       organisation: raw.organisation || '',
       city:         raw.city         || '',
@@ -60,7 +66,9 @@
       lat,
       lng,
       link:         raw.link         || '',
-      keywords:     raw.keywords ? raw.keywords.split(' | ').map(k => k.trim()) : [],
+      // Real-world data is inconsistent about spacing around the pipe
+      // ("A | B" vs "A| B"); split leniently and drop empty trailing entries.
+      keywords:     raw.keywords ? raw.keywords.split(/\s*\|\s*/).map(k => k.trim()).filter(Boolean) : [],
     };
 
     if (raw.type === 'pin') {

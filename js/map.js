@@ -1,4 +1,6 @@
-// Leaflet map for Mission Intelligence — Folie 2 (Gesamtübersicht).
+// Leaflet map factory for Mission Intelligence.
+// APP_MAP.create(containerId, options) returns an independent map controller —
+// used once for the overview (Folie 2) and once per mission slide (Folien 3–7).
 // Fly-in: markers land at their target position immediately (opacity 0, scale 0).
 // After CartoDB tiles have loaded AND ≥800ms since first open, they fade + spring in.
 
@@ -23,91 +25,44 @@
     water:   '#6a8cb7',
   };
 
-  const PIN_SIZE          = 36;
-  const SPIDER_THRESHOLD  = 0.018;   // ~2 km
-  const SPIDER_RADIUS     = 0.018;
-  const POINT_THRESHOLD   = 0.009;   // ~1 km
-  const FLY_IN_MIN_MS     = 800;     // minimum wait after slide opens
-  const FLY_IN_STAGGER_MS = 50;
-  const TILES_TIMEOUT_MS  = 4000;    // fallback if tiles never fire 'load'
+  const DEFAULT_CENTER     = [47.6, 13.5];
+  const DEFAULT_ZOOM       = 7;
+  const PIN_SIZE           = 36;
+  const PIN_Z_INDEX_OFFSET = 1000;   // keeps pins above points regardless of screen position
+  const SPIDER_THRESHOLD   = 0.018;   // ~2 km
+  const SPIDER_RADIUS      = 0.018;
+  const POINT_THRESHOLD    = 0.009;   // ~1 km
+  const FLY_IN_MIN_MS      = 800;     // minimum wait after slide opens
+  const FLY_IN_STAGGER_MS  = 50;
+  const TILES_TIMEOUT_MS   = 4000;    // fallback if tiles never fire 'load'
 
-  let _map          = null;
-  let _tileLayer    = null;
-  let _pinLayer     = null;
-  let _pointLayer   = null;
-  let _spiderLayer  = null;
-
-  let _hasFlownIn     = false;   // true after first animation runs
-  let _tilesReady     = false;   // true after tileLayer fires 'load'
-  let _tilesCallbacks = [];      // queued callbacks waiting for tiles
-  let _openTimeMs     = null;    // timestamp of first renderMarkers call
-
-  // ── Map initialisation ────────────────────────────────────────────────
-
-  function initMap(containerId) {
-    if (_map) { _map.invalidateSize(); return _map; }
-
-    _map = L.map(containerId, {
-      center: [47.6, 13.5],
-      zoom: 7,
-      zoomControl: true,
-      attributionControl: true,
-    });
-
-    _tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(_map);
-
-    // Mark tiles ready on first full load; fallback after TILES_TIMEOUT_MS.
-    _tileLayer.once('load', _markTilesReady);
-    setTimeout(_markTilesReady, TILES_TIMEOUT_MS);
-
-    _pinLayer    = L.layerGroup().addTo(_map);
-    _pointLayer  = L.layerGroup().addTo(_map);
-    _spiderLayer = L.layerGroup().addTo(_map);
-
-    fetch(GEOJSON_URL)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then(data => {
-        _addBundeslandBorders(data);
-        _addAustriaMask(data);
-      })
-      .catch(err => console.error('[map.js] GeoJSON Fehler:', err));
-
-    return _map;
-  }
-
-  function invalidateSize() {
-    if (_map) _map.invalidateSize();
-  }
-
-  function _markTilesReady() {
-    if (_tilesReady) return;
-    _tilesReady = true;
-    _tilesCallbacks.forEach(fn => fn());
-    _tilesCallbacks = [];
-  }
-
-  function _whenTilesReady(fn) {
-    if (_tilesReady) { fn(); return; }
-    _tilesCallbacks.push(fn);
+  // GeoJSON is fetched once and shared across every map instance.
+  let _geojsonPromise = null;
+  function _loadGeoJSON() {
+    if (!_geojsonPromise) {
+      _geojsonPromise = fetch(GEOJSON_URL)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .catch(err => {
+          console.error('[map.js] GeoJSON Fehler:', err);
+          return null;
+        });
+    }
+    return _geojsonPromise;
   }
 
   // ── Base layers ───────────────────────────────────────────────────────
 
-  function _addBundeslandBorders(data) {
+  function _addBundeslandBorders(map, data) {
     L.geoJSON(data, {
       style: { fill: false, color: 'rgba(184,163,159,0.55)', weight: 1, dashArray: '5 4' },
       interactive: false,
-    }).addTo(_map);
+    }).addTo(map);
   }
 
-  function _addAustriaMask(data) {
+  function _addAustriaMask(map, data) {
     const world = [[-90, -180], [-90, 180], [90, 180], [90, -180]];
     const holes = [];
     data.features.forEach(f => {
@@ -124,14 +79,14 @@
       fillColor: '#1a1410',
       fillOpacity: 0.62,
       interactive: false,
-    }).addTo(_map);
+    }).addTo(map);
   }
 
   // ── Icons ─────────────────────────────────────────────────────────────
 
   function _createPinIcon(mission, hidden) {
-    const src       = `assets/logos/Mission_${MISSION_SVG[mission] || 'Climate'}.svg`;
-    const innerCls  = hidden ? 'pin-inner anim-hidden' : 'pin-inner';
+    const src      = `assets/logos/Mission_${MISSION_SVG[mission] || 'Climate'}.svg`;
+    const innerCls = hidden ? 'pin-inner anim-hidden' : 'pin-inner';
     return L.divIcon({
       html: `<div class="${innerCls}"><img src="${src}" width="${PIN_SIZE}" height="${PIN_SIZE}" draggable="false"></div>`,
       className: 'mission-pin-icon',
@@ -216,106 +171,171 @@
     return clusters;
   }
 
-  // ── Render ────────────────────────────────────────────────────────────
-
-  function renderMarkers(filter) {
-    const willAnimate = !_hasFlownIn;
-
-    _activeFilter = filter || null;
-    if (!_map || !window.APP_DATA) return;
-
-    _pinLayer.clearLayers();
-    _pointLayer.clearLayers();
-    _spiderLayer.clearLayers();
-
-    let pins   = window.APP_DATA.projects.filter(p => p.type === 'pin');
-    let points = window.APP_DATA.projects.filter(p => p.type === 'point');
-
-    if (filter) {
-      const match = filter.type === 'mission'
-        ? p => p.mission    === filter.value
-        : p => p.bundesland === filter.value;
-      pins   = pins.filter(match);
-      points = points.filter(match);
-    }
-
-    _applySpider(pins);
-    const clusters = _clusterPoints(points);
-
-    pins.forEach(pin => {
-      const tLat = pin._dLat ?? pin.lat;
-      const tLng = pin._dLng ?? pin.lng;
-      const marker = L.marker([tLat, tLng], {
-        icon: _createPinIcon(pin.mission, willAnimate),
-        title: pin.name,
-        riseOnHover: true,
-      });
-      marker.on('click', () =>
-        document.dispatchEvent(new CustomEvent('map:pin-click', { detail: { project: pin } }))
-      );
-      _pinLayer.addLayer(marker);
-      if (pin._center) {
-        _spiderLayer.addLayer(L.polyline(
-          [pin._center, [tLat, tLng]],
-          { color: 'rgba(184,163,159,0.4)', weight: 1, interactive: false }
-        ));
-      }
-    });
-
-    clusters.forEach(c => {
-      _pointLayer.addLayer(L.marker([c.lat, c.lng], {
-        icon: _createPointIcon(c.missions, willAnimate),
-        interactive: false,
-        keyboard: false,
-      }));
-    });
-
-    // ── Fly-in (first render only) ──────────────────────────────────────
-    if (willAnimate) {
-      _hasFlownIn  = true;
-      _openTimeMs  = Date.now();
-
-      // Wait one frame for Leaflet to insert marker elements into the DOM,
-      // then queue the animation behind the tile-load gate + minimum delay.
-      requestAnimationFrame(() => {
-        const pane    = _map.getPane('markerPane');
-        const hidden  = Array.from(pane.querySelectorAll('.anim-hidden'));
-
-        _whenTilesReady(() => {
-          const elapsed  = Date.now() - _openTimeMs;
-          const waitMore = Math.max(0, FLY_IN_MIN_MS - elapsed);
-
-          setTimeout(() => _startFlyIn(hidden), waitMore);
-        });
-      });
-    }
-  }
-
   function _startFlyIn(elements) {
     elements.forEach((el, i) => {
       setTimeout(() => {
-        // One extra rAF ensures the browser painted the anim-hidden (opacity:0)
-        // state at least once before we remove the class and trigger the transition.
-        requestAnimationFrame(() => {
-          el.classList.remove('anim-hidden');
-        });
+        requestAnimationFrame(() => el.classList.remove('anim-hidden'));
       }, FLY_IN_STAGGER_MS * i);
     });
   }
 
-  // ── Public API ────────────────────────────────────────────────────────
+  // ── Factory ───────────────────────────────────────────────────────────
 
-  let _activeFilter = null;
+  /**
+   * Creates an independent map controller bound to containerId.
+   * options:
+   *   missionFilter — restrict all rendering to a single mission (mission slides)
+   *   onPinClick(project) — called on pin click; falls back to the global
+   *                          'map:pin-click' event when omitted (overview behaviour)
+   *   center, zoom — defaults to Austria overview (47.6, 13.5) @ zoom 7
+   */
+  function create(containerId, options) {
+    options = options || {};
+    const missionFilter = options.missionFilter || null;
+    const center = options.center || DEFAULT_CENTER;
+    const zoom   = options.zoom != null ? options.zoom : DEFAULT_ZOOM;
 
-  function setFilter(filter) {
-    _hasFlownIn = true;   // skip animation on filter changes
-    renderMarkers(filter);
+    const map = L.map(containerId, {
+      center, zoom,
+      zoomControl: true,
+      attributionControl: true,
+    });
+
+    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map);
+
+    let tilesReady = false;
+    const tilesCallbacks = [];
+    function markTilesReady() {
+      if (tilesReady) return;
+      tilesReady = true;
+      tilesCallbacks.forEach(fn => fn());
+      tilesCallbacks.length = 0;
+    }
+    function whenTilesReady(fn) {
+      if (tilesReady) fn(); else tilesCallbacks.push(fn);
+    }
+    tileLayer.once('load', markTilesReady);
+    setTimeout(markTilesReady, TILES_TIMEOUT_MS);
+
+    const pinLayer    = L.layerGroup().addTo(map);
+    const pointLayer  = L.layerGroup().addTo(map);
+    const spiderLayer = L.layerGroup().addTo(map);
+
+    _loadGeoJSON().then(data => {
+      if (!data) return;
+      _addBundeslandBorders(map, data);
+      _addAustriaMask(map, data);
+    });
+
+    let hasFlownIn   = false;
+    let openTimeMs   = null;
+    let activeFilter = null; // mission/bundesland toggle — overview only
+
+    function renderMarkers(filter) {
+      const willAnimate = !hasFlownIn;
+      activeFilter = filter || null;
+      if (!window.APP_DATA) return;
+
+      pinLayer.clearLayers();
+      pointLayer.clearLayers();
+      spiderLayer.clearLayers();
+
+      let pins   = window.APP_DATA.projects.filter(p => p.type === 'pin');
+      let points = window.APP_DATA.projects.filter(p => p.type === 'point');
+
+      if (missionFilter) {
+        pins   = pins.filter(p => p.mission === missionFilter);
+        points = points.filter(p => p.mission === missionFilter);
+      } else if (activeFilter) {
+        const match = activeFilter.type === 'mission'
+          ? p => p.mission    === activeFilter.value
+          : p => p.bundesland === activeFilter.value;
+        pins   = pins.filter(match);
+        points = points.filter(match);
+      }
+
+      _applySpider(pins);
+      const clusters = _clusterPoints(points);
+
+      pins.forEach(pin => {
+        const tLat = pin._dLat ?? pin.lat;
+        const tLng = pin._dLng ?? pin.lng;
+        const marker = L.marker([tLat, tLng], {
+          icon: _createPinIcon(pin.mission, willAnimate),
+          title: pin.name,
+          riseOnHover: true,
+          // Leaflet z-indexes markers by their on-screen Y position by default,
+          // so a pin further "north" could otherwise be drawn under a point
+          // further "south". This offset guarantees pins always win.
+          zIndexOffset: PIN_Z_INDEX_OFFSET,
+        });
+        marker.on('click', () => {
+          if (options.onPinClick) options.onPinClick(pin);
+          else document.dispatchEvent(new CustomEvent('map:pin-click', { detail: { project: pin } }));
+        });
+        pinLayer.addLayer(marker);
+        if (pin._center) {
+          spiderLayer.addLayer(L.polyline(
+            [pin._center, [tLat, tLng]],
+            { color: 'rgba(184,163,159,0.4)', weight: 1, interactive: false }
+          ));
+        }
+      });
+
+      clusters.forEach(c => {
+        pointLayer.addLayer(L.marker([c.lat, c.lng], {
+          icon: _createPointIcon(c.missions, willAnimate),
+          interactive: false,
+          keyboard: false,
+        }));
+      });
+
+      // ── Fly-in (first render only) ────────────────────────────────────
+      if (willAnimate) {
+        hasFlownIn = true;
+        openTimeMs = Date.now();
+
+        requestAnimationFrame(() => {
+          const pane   = map.getPane('markerPane');
+          const hidden = Array.from(pane.querySelectorAll('.anim-hidden'));
+
+          whenTilesReady(() => {
+            const elapsed  = Date.now() - openTimeMs;
+            const waitMore = Math.max(0, FLY_IN_MIN_MS - elapsed);
+            setTimeout(() => _startFlyIn(hidden), waitMore);
+          });
+        });
+      }
+    }
+
+    function setFilter(filter) {
+      hasFlownIn = true;   // skip animation on filter changes
+      renderMarkers(filter);
+    }
+
+    function clearFilter() {
+      setFilter(null);
+    }
+
+    function invalidateSize() {
+      map.invalidateSize();
+    }
+
+    function flyTo(lat, lng, zoomLevel, durationSec) {
+      map.flyTo([lat, lng], zoomLevel, { duration: durationSec != null ? durationSec : 1.5 });
+    }
+
+    function flyToHome() {
+      map.flyTo(center, zoom, { duration: 1.0 });
+    }
+
+    return { map, renderMarkers, setFilter, clearFilter, invalidateSize, flyTo, flyToHome };
   }
 
-  function clearFilter() {
-    setFilter(null);
-  }
-
-  window.APP_MAP = { initMap, invalidateSize, renderMarkers, setFilter, clearFilter };
+  window.APP_MAP = { create };
 
 })();
