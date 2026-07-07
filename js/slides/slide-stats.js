@@ -177,13 +177,12 @@
         cutout: '62%',
         plugins: {
           legend: {
-            position: 'bottom',
-            align:    'start',
+            position: 'right',
             labels: {
               color:    'white',
-              font:     { size: 11 },
+              font:     { size: 10 },
               boxWidth: 10,
-              padding:  12,
+              padding:  10,
               generateLabels: chart => {
                 const ds = chart.data.datasets[0];
                 return chart.data.labels.map((label, i) => ({
