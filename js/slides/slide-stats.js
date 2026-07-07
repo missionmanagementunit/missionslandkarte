@@ -69,8 +69,11 @@
         </div>
         <div class="stats-card" id="stats-card-2">
           <div class="stats-card-title">Fördervolumen pro Mission</div>
-          <div class="stats-card-content" id="stats-content-2">
-            <canvas id="stats-chart-mission"></canvas>
+          <div class="stats-card-content stats-card-content--donut" id="stats-content-2">
+            <div class="stats-donut-canvas-wrap">
+              <canvas id="stats-chart-mission"></canvas>
+            </div>
+            <div id="stats-donut-legend" class="stats-donut-legend"></div>
           </div>
         </div>
         <div class="stats-card" id="stats-card-3">
@@ -98,10 +101,11 @@
     _renderTimeouts[step] = setTimeout(() => {
       delete _renderTimeouts[step];
       if (document.getElementById(`stats-card-${step}`)?.classList.contains('visible')) {
-        // rAF ensures Chrome's GPU compositor has committed the opacity=1 layer
-        // before Chart.js registers its own rAF loop — without this, Chrome
-        // delivers canvas frames mid-animation so bars appear to skip.
-        requestAnimationFrame(() => _renderCard(step));
+        // Two nested rAFs ensure the GPU compositor has fully committed the
+        // opacity=1 layer on all OS/browser combinations before Chart.js starts
+        // its own rAF loop. One rAF is sufficient on macOS; Windows Chrome and
+        // Firefox need the second cycle to flush the compositor thread.
+        requestAnimationFrame(() => requestAnimationFrame(() => _renderCard(step)));
       }
     }, 420);
   }
@@ -134,16 +138,33 @@
   }
 
   function _renderMissionDonut() {
-    const canvas = document.getElementById('stats-chart-mission');
+    const canvas   = document.getElementById('stats-chart-mission');
+    const legendEl = document.getElementById('stats-donut-legend');
     if (!canvas || typeof Chart === 'undefined') return;
+
     const missions = ['climate', 'cities', 'cancer', 'soil', 'water'];
+    const values   = missions.map(m => _data.byMission[m] || 0);
+    const total    = values.reduce((a, b) => a + b, 0);
+
+    // HTML legend — avoids canvas text clipping and fills any screen width
+    if (legendEl) {
+      legendEl.innerHTML = missions.map((m, i) => {
+        const mio = (values[i] / 1_000_000).toLocaleString('de-AT', {
+          minimumFractionDigits: 1, maximumFractionDigits: 1,
+        });
+        return `<div class="stats-donut-legend-item">
+          <span class="stats-donut-legend-swatch" style="background:${_missionColor(m)}"></span>
+          <span class="stats-donut-legend-label">${_missionLabel(m)}</span>
+          <span class="stats-donut-legend-value">${mio} Mio.</span>
+        </div>`;
+      }).join('');
+    }
 
     const pctLabels = {
       id: 'pctLabels',
       afterDatasetsDraw(chart) {
         const { ctx } = chart;
-        const ds    = chart.data.datasets[0];
-        const total = ds.data.reduce((a, b) => a + b, 0);
+        const ds = chart.data.datasets[0];
         if (total === 0) return;
         chart.getDatasetMeta(0).data.forEach((arc, i) => {
           const pct = ds.data[i] / total * 100;
@@ -165,7 +186,7 @@
       data: {
         labels:   missions.map(_missionLabel),
         datasets: [{
-          data:            missions.map(m => _data.byMission[m] || 0),
+          data:            values,
           backgroundColor: missions.map(_missionColor),
           borderWidth:     2,
           borderColor:     'rgba(255,255,255,0.35)',
@@ -174,32 +195,12 @@
       },
       options: {
         responsive:          true,
-        maintainAspectRatio: true,
-        color:               'white',   // global text color for this chart instance
+        maintainAspectRatio: false,
         animation: { duration: 700, easing: 'easeOutQuart' },
         cutout: '62%',
+        layout: { padding: 8 },
         plugins: {
-          legend: {
-            position: 'right',
-            labels: {
-              color:    'white',
-              font:     { size: 10 },
-              boxWidth: 10,
-              padding:  10,
-              generateLabels: chart => {
-                const ds = chart.data.datasets[0];
-                return chart.data.labels.map((label, i) => ({
-                  text:        `${label}  ${(ds.data[i] / 1_000_000).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mio.`,
-                  fillStyle:   ds.backgroundColor[i],
-                  strokeStyle: ds.backgroundColor[i],
-                  lineWidth:   0,
-                  hidden:      false,
-                  index:       i,
-                  fontColor:   'white',
-                }));
-              },
-            },
-          },
+          legend: { display: false },
           tooltip: {
             callbacks: {
               label: ctx => ` € ${(ctx.raw / 1_000_000).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mio.`,

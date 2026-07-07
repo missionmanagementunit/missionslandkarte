@@ -271,6 +271,59 @@
   inset: 0;
 }
 
+/* Donut card: square canvas on the left, HTML legend on the right */
+.stats-card-content--donut {
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.stats-donut-canvas-wrap {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.stats-donut-legend {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stats-donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stats-donut-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.stats-donut-legend-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stats-donut-legend-value {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* Count-up total */
 .stats-total-value {
   font-size: 52px;
