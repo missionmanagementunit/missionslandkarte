@@ -51,6 +51,9 @@
           const iframe = playerDiv.querySelector('iframe');
           if (iframe) {
             iframe.setAttribute('tabindex', '-1');
+            // Chrome requires allow="fullscreen" (Permissions Policy) for
+            // requestFullscreen() to work — the YT API only adds allowfullscreen.
+            iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media');
             closeBtn?.focus();
             mo.disconnect();
           }
