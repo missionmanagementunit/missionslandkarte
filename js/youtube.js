@@ -44,6 +44,15 @@
             else if (entry.pendingPlay) { entry.player.playVideo(); entry.pendingPlay = false; }
           },
           onStateChange: e => {
+            if (e.data === YT.PlayerState.PLAYING) {
+              e.target.unloadModule('captions');
+              // Hide the play-overlay thumbnail once playback starts so the video
+              // is visible in the tile even if requestFullscreen() failed silently.
+              const overlay = document.getElementById(elementId)
+                ?.closest('.tile-thumbnail-wrap')
+                ?.querySelector('.tile-play-overlay');
+              if (overlay) overlay.style.display = 'none';
+            }
             if (e.data === YT.PlayerState.ENDED) _exitFullscreen();
           },
         },
