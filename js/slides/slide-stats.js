@@ -170,18 +170,20 @@
         }],
       },
       options: {
-        responsive: true,
+        responsive:          true,
         maintainAspectRatio: true,
+        color:               'white',   // global text color for this chart instance
         animation: { duration: 700, easing: 'easeOutQuart' },
         cutout: '62%',
         plugins: {
           legend: {
-            position: 'right',
+            position: 'bottom',
+            align:    'start',
             labels: {
               color:    'white',
               font:     { size: 11 },
               boxWidth: 10,
-              padding:  10,
+              padding:  12,
               generateLabels: chart => {
                 const ds = chart.data.datasets[0];
                 return chart.data.labels.map((label, i) => ({
@@ -191,6 +193,7 @@
                   lineWidth:   0,
                   hidden:      false,
                   index:       i,
+                  fontColor:   'white',
                 }));
               },
             },
@@ -251,7 +254,7 @@
         plugins: { legend: { display: false } },
         scales: {
           x: {
-            ticks:  { color: 'rgba(255,255,255,0.4)', stepSize: 1 },
+            ticks:  { color: 'rgba(255,255,255,0.4)', stepSize: 50 },
             grid:   { color: 'rgba(255,255,255,0.07)' },
             border: { display: false },
           },
@@ -276,15 +279,32 @@
       return totB - totA;
     });
 
-    const stackedTotals = {
-      id: 'stackedTotals',
+    const stackedLabels = {
+      id: 'stackedLabels',
       afterDatasetsDraw(chart) {
         const { ctx, data, scales } = chart;
-        const lastMeta = chart.getDatasetMeta(data.datasets.length - 1);
+        const MIN_SEG_PX = 18;   // minimum segment width to draw a value inside it
         ctx.save();
-        ctx.fillStyle    = 'rgba(255,255,255,0.75)';
-        ctx.font         = '11px sans-serif';
+
+        // Per-segment values (drawn inside each mission block where there's room)
+        ctx.font         = 'bold 10px sans-serif';
         ctx.textBaseline = 'middle';
+        ctx.textAlign    = 'center';
+        data.datasets.forEach((ds, di) => {
+          const meta = chart.getDatasetMeta(di);
+          meta.data.forEach((bar, i) => {
+            const val = ds.data[i];
+            if (!val) return;
+            const segWidth = Math.abs(bar.x - bar.base);
+            if (segWidth < MIN_SEG_PX) return;
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillText(val, (bar.x + bar.base) / 2, bar.y);
+          });
+        });
+
+        // Row totals (drawn just past the end of each stacked row)
+        const lastMeta = chart.getDatasetMeta(data.datasets.length - 1);
+        ctx.font         = '11px sans-serif';
         ctx.textAlign    = 'left';
         data.labels.forEach((_, i) => {
           const total = data.datasets.reduce((s, ds) => s + (ds.data[i] || 0), 0);
@@ -292,8 +312,10 @@
           const xPx = scales.x.getPixelForValue(total);
           const yPx = lastMeta.data[i]?.y;
           if (yPx == null) return;
+          ctx.fillStyle = 'rgba(255,255,255,0.75)';
           ctx.fillText(total, xPx + 4, yPx);
         });
+
         ctx.restore();
       },
     };
@@ -331,7 +353,7 @@
         scales: {
           x: {
             stacked: true,
-            ticks:   { color: 'rgba(255,255,255,0.4)', stepSize: 1 },
+            ticks:   { color: 'rgba(255,255,255,0.4)', stepSize: 50 },
             grid:    { color: 'rgba(255,255,255,0.07)' },
             border:  { display: false },
           },
@@ -343,7 +365,7 @@
           },
         },
       },
-      plugins: [stackedTotals],
+      plugins: [stackedLabels],
     });
   }
 
