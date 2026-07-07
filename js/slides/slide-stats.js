@@ -98,7 +98,10 @@
     _renderTimeouts[step] = setTimeout(() => {
       delete _renderTimeouts[step];
       if (document.getElementById(`stats-card-${step}`)?.classList.contains('visible')) {
-        _renderCard(step);
+        // rAF ensures Chrome's GPU compositor has committed the opacity=1 layer
+        // before Chart.js registers its own rAF loop — without this, Chrome
+        // delivers canvas frames mid-animation so bars appear to skip.
+        requestAnimationFrame(() => _renderCard(step));
       }
     }, 420);
   }
