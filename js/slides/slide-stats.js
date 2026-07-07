@@ -12,7 +12,8 @@
   let _step   = 0;
   let _panel  = null;
   let _data   = null;
-  let _charts = {};   // step number → Chart instance
+  let _charts         = {};   // step number → Chart instance
+  let _renderTimeouts = {};   // step number → pending setTimeout ID
 
   // ── Public API ────────────────────────────────────────────────────────
 
@@ -43,6 +44,8 @@
 
   function close() {
     if (!_panel) return;
+    Object.keys(_renderTimeouts).forEach(k => { clearTimeout(_renderTimeouts[k]); });
+    _renderTimeouts = {};
     Object.values(_charts).forEach(c => { try { c.destroy(); } catch (_) {} });
     _charts = {};
     _step   = 0;
@@ -90,10 +93,19 @@
     const card = document.getElementById(`stats-card-${step}`);
     if (!card) return;
     card.classList.add('visible');
-    _renderCard(step);
+    // Wait for the 400ms CSS fade-in so Chart.js animation plays while the card
+    // is already fully visible, not while it is still transparent.
+    _renderTimeouts[step] = setTimeout(() => {
+      delete _renderTimeouts[step];
+      if (document.getElementById(`stats-card-${step}`)?.classList.contains('visible')) {
+        _renderCard(step);
+      }
+    }, 420);
   }
 
   function _deactivateCard(step) {
+    clearTimeout(_renderTimeouts[step]);
+    delete _renderTimeouts[step];
     const card = document.getElementById(`stats-card-${step}`);
     if (card) card.classList.remove('visible');
     if (_charts[step]) {
@@ -122,6 +134,29 @@
     const canvas = document.getElementById('stats-chart-mission');
     if (!canvas || typeof Chart === 'undefined') return;
     const missions = ['climate', 'cities', 'cancer', 'soil', 'water'];
+
+    const pctLabels = {
+      id: 'pctLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const ds    = chart.data.datasets[0];
+        const total = ds.data.reduce((a, b) => a + b, 0);
+        if (total === 0) return;
+        chart.getDatasetMeta(0).data.forEach((arc, i) => {
+          const pct = ds.data[i] / total * 100;
+          if (pct < 4) return;
+          const pos = arc.tooltipPosition();
+          ctx.save();
+          ctx.fillStyle    = 'white';
+          ctx.font         = 'bold 11px sans-serif';
+          ctx.textAlign    = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${Math.round(pct)}%`, pos.x, pos.y);
+          ctx.restore();
+        });
+      },
+    };
+
     _charts[2] = new Chart(canvas, {
       type: 'doughnut',
       data: {
@@ -130,7 +165,7 @@
           data:            missions.map(m => _data.byMission[m] || 0),
           backgroundColor: missions.map(_missionColor),
           borderWidth:     2,
-          borderColor:     '#1a1a1a',
+          borderColor:     'rgba(255,255,255,0.35)',
           hoverOffset:     6,
         }],
       },
@@ -143,13 +178,12 @@
           legend: {
             position: 'right',
             labels: {
-              color:    'rgba(255,255,255,0.75)',
+              color:    'white',
               font:     { size: 11 },
               boxWidth: 10,
               padding:  10,
               generateLabels: chart => {
-                const ds  = chart.data.datasets[0];
-                const tot = ds.data.reduce((a, b) => a + b, 0);
+                const ds = chart.data.datasets[0];
                 return chart.data.labels.map((label, i) => ({
                   text:        `${label}  ${(ds.data[i] / 1_000_000).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mio.`,
                   fillStyle:   ds.backgroundColor[i],
@@ -168,6 +202,7 @@
           },
         },
       },
+      plugins: [pctLabels],
     });
   }
 
@@ -175,6 +210,26 @@
     const canvas = document.getElementById('stats-chart-bundesland');
     if (!canvas || typeof Chart === 'undefined') return;
     const entries = Object.entries(_data.byBundesland).sort((a, b) => b[1] - a[1]);
+
+    const barValues = {
+      id: 'barValues',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        ctx.save();
+        ctx.fillStyle    = 'rgba(255,255,255,0.75)';
+        ctx.font         = '11px sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign    = 'left';
+        meta.data.forEach((bar, i) => {
+          const val = chart.data.datasets[0].data[i];
+          if (!val) return;
+          ctx.fillText(val, bar.x + 4, bar.y);
+        });
+        ctx.restore();
+      },
+    };
+
     _charts[3] = new Chart(canvas, {
       type: 'bar',
       data: {
@@ -190,21 +245,24 @@
         indexAxis:           'y',
         responsive:          true,
         maintainAspectRatio: false,
-        animation: { duration: 700, easing: 'easeOutQuart' },
+        clip:                false,
+        animation:           { duration: 900, easing: 'easeOutQuart' },
+        layout: { padding: { right: 28 } },
         plugins: { legend: { display: false } },
         scales: {
           x: {
-            ticks: { color: 'rgba(255,255,255,0.4)', stepSize: 1 },
-            grid:  { color: 'rgba(255,255,255,0.07)' },
+            ticks:  { color: 'rgba(255,255,255,0.4)', stepSize: 1 },
+            grid:   { color: 'rgba(255,255,255,0.07)' },
             border: { display: false },
           },
           y: {
-            ticks: { color: 'rgba(255,255,255,0.75)', font: { size: 11 } },
-            grid:  { display: false },
+            ticks:  { color: 'rgba(255,255,255,0.75)', font: { size: 11 }, autoSkip: false },
+            grid:   { display: false },
             border: { display: false },
           },
         },
       },
+      plugins: [barValues],
     });
   }
 
@@ -217,6 +275,29 @@
       const totB = Object.values(_data.byBundeslandMission[b]).reduce((s, v) => s + v, 0);
       return totB - totA;
     });
+
+    const stackedTotals = {
+      id: 'stackedTotals',
+      afterDatasetsDraw(chart) {
+        const { ctx, data, scales } = chart;
+        const lastMeta = chart.getDatasetMeta(data.datasets.length - 1);
+        ctx.save();
+        ctx.fillStyle    = 'rgba(255,255,255,0.75)';
+        ctx.font         = '11px sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign    = 'left';
+        data.labels.forEach((_, i) => {
+          const total = data.datasets.reduce((s, ds) => s + (ds.data[i] || 0), 0);
+          if (!total) return;
+          const xPx = scales.x.getPixelForValue(total);
+          const yPx = lastMeta.data[i]?.y;
+          if (yPx == null) return;
+          ctx.fillText(total, xPx + 4, yPx);
+        });
+        ctx.restore();
+      },
+    };
+
     _charts[4] = new Chart(canvas, {
       type: 'bar',
       data: {
@@ -233,7 +314,9 @@
         indexAxis:           'y',
         responsive:          true,
         maintainAspectRatio: false,
-        animation: { duration: 700, easing: 'easeOutQuart' },
+        clip:                false,
+        animation:           { duration: 900, easing: 'easeOutQuart' },
+        layout: { padding: { right: 28 } },
         plugins: {
           legend: {
             position: 'top',
@@ -254,12 +337,13 @@
           },
           y: {
             stacked: true,
-            ticks:   { color: 'rgba(255,255,255,0.75)', font: { size: 11 } },
+            ticks:   { color: 'rgba(255,255,255,0.75)', font: { size: 11 }, autoSkip: false },
             grid:    { display: false },
             border:  { display: false },
           },
         },
       },
+      plugins: [stackedTotals],
     });
   }
 
@@ -289,7 +373,8 @@
     const byBundeslandMission = {};
 
     pins.forEach(p => {
-      byMission[p.mission]  = (byMission[p.mission]  || 0) + (p.foerderung_eur || 0);
+      byMission[p.mission] = (byMission[p.mission] || 0) + (p.foerderung_eur || 0);
+      if (!p.bundesland) return;   // skip rows with missing Bundesland
       byBundesland[p.bundesland] = (byBundesland[p.bundesland] || 0) + 1;
       if (!byBundeslandMission[p.bundesland]) byBundeslandMission[p.bundesland] = {};
       byBundeslandMission[p.bundesland][p.mission] =
