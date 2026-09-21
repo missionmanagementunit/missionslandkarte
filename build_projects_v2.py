@@ -3,7 +3,9 @@ Erzeugt data/projects_v2.csv aus data/projects.csv + Backend Project Selection.x
 
 Korrigiert gegenüber projects.csv:
   1. foerderung_eur  — frisch aus der xlsx, auf ganze EUR gerundet
-                       (geocode_projects-3.py hatte den Dezimalpunkt gelöscht → ×10 … ×100000)
+                       (geocode_projects-3.py hatte den Dezimalpunkt gelöscht → ×10 … ×100000).
+                       Bei EU-FP-Projekten sind die xlsx-Spalten vertauscht (geprüft gegen CORDIS):
+                       "Project Cost" enthält die EU-Förderung, "foerderung_eur" die Gesamtkosten.
   2. Standorte       — Bundesland-Korrekturen geprüft, Nominatim-Fehltreffer korrigiert,
                        doppelte Ortsnamen vereinheitlicht
   3. Datumsangaben   — neue Spalten project_start / project_end im ISO-8601-Format
@@ -42,6 +44,11 @@ BUNDESLAND_CORRECTIONS = {
     ("Klagenfurt Am Wörthersee", "Wien"): "Kärnten",
 }
 
+# Bundesland-Fehler, die schon in projects.csv falsch sind (Stadt, Bundesland_alt) -> korrekt.
+BUNDESLAND_FIXES = {
+    ("Niederranna", "Kärnten"): "Oberösterreich",  # Global Hydro Energy, Hofkirchen im Mühlkreis
+}
+
 # Gleicher Ort unter zwei Namen (identische Koordinaten) -> ein Name.
 CITY_ALIASES = {
     "Tulln": "Tulln an der Donau",
@@ -53,9 +60,15 @@ COORD_CORRECTIONS = {
     "Enns|Oberösterreich":      ("48,2130", "14,4757"),  # war 47,5549/14,2171 (Fluss Enns, Stmk.)
     "Traun|Oberösterreich":     ("48,2206", "14,2394"),  # war 47,9186/13,8023 (Traunsee-Gebiet)
     "Hagenberg|Oberösterreich": ("48,3683", "14,5167"),  # war 48,392/13,8089 (nicht Hagenberg i. M.)
+    "Niederranna|Oberösterreich": ("48,4672", "13,7981"),  # war 46,835/14,502 (manuell, Kärnten)
 }
 
-MISSING_MARKERS = {None, "", "N/A", "n/a"}  # so kennzeichnet die xlsx fehlende Förderbeträge
+# Quelle -> xlsx-Spalte, die tatsächlich die Förderung enthält.
+# EU FP: "Project Cost" = CORDIS ecContribution (EU-Förderung); "foerderung_eur" = Gesamtkosten.
+FUNDING_COLUMN_BY_SOURCE = {"EU FP": "Project Cost"}
+DEFAULT_FUNDING_COLUMN = "foerderung_eur"  # LIFE, FFG, Pins
+
+MISSING_MARKERS ={None, "", "N/A", "n/a"}  # so kennzeichnet die xlsx fehlende Förderbeträge
 
 DATE_DMY_LONG =re.compile(r"^(\d{2})\.(\d{2})\.(\d{4})$")   # FFG:  01.10.2024
 DATE_DMY_SHORT = re.compile(r"^(\d{2})\.(\d{2})\.(\d{2})$")  # LIFE: 01.07.25
@@ -114,8 +127,12 @@ def check_bundesland(row, xlsx_record):
 
 
 def fix_location(row):
-    """Vereinheitlicht Ortsnamen und ersetzt bekannte falsche Koordinaten; gibt True bei Änderung zurück."""
+    """Korrigiert Bundesland, Ortsnamen und bekannte falsche Koordinaten; gibt True bei Änderung zurück."""
     changed = False
+    bl_key = (row["city"], row["bundesland"])
+    if bl_key in BUNDESLAND_FIXES:
+        row["bundesland"] = BUNDESLAND_FIXES[bl_key]
+        changed = True
     if row["city"] in CITY_ALIASES:
         row["city"] = CITY_ALIASES[row["city"]]
         changed = True
@@ -144,7 +161,8 @@ def build():
         record = xlsx[row["id"]]
         check_bundesland(row, record)
 
-        new_funding = format_funding(record["foerderung_eur"])
+        funding_column = FUNDING_COLUMN_BY_SOURCE.get(record["Source"], DEFAULT_FUNDING_COLUMN)
+        new_funding = format_funding(record[funding_column])
         if new_funding != row["foerderung_eur"]:
             funding_changed += 1
         row["foerderung_eur"] = new_funding
