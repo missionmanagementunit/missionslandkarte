@@ -4,8 +4,8 @@ Erzeugt data/projects_v2.csv aus data/projects.csv + Backend Project Selection.x
 Korrigiert gegenüber projects.csv:
   1. foerderung_eur  — frisch aus der xlsx, auf ganze EUR gerundet
                        (geocode_projects-3.py hatte den Dezimalpunkt gelöscht → ×10 … ×100000).
-                       Bei EU-FP-Projekten sind die xlsx-Spalten vertauscht (geprüft gegen CORDIS):
-                       "Project Cost" enthält die EU-Förderung, "foerderung_eur" die Gesamtkosten.
+                       Quelle ist die korrigierte xlsx vom 2026-09-21: foerderung_eur = EU-Förderung
+                       der jeweiligen Organisation (CORDIS ecContribution) für EU FP und LIFE.
   2. Standorte       — Bundesland-Korrekturen geprüft, Nominatim-Fehltreffer korrigiert,
                        doppelte Ortsnamen vereinheitlicht
   3. Datumsangaben   — neue Spalten project_start / project_end im ISO-8601-Format
@@ -63,10 +63,9 @@ COORD_CORRECTIONS = {
     "Niederranna|Oberösterreich": ("48,4672", "13,7981"),  # war 46,835/14,502 (manuell, Kärnten)
 }
 
-# Quelle -> xlsx-Spalte, die tatsächlich die Förderung enthält.
-# EU FP: "Project Cost" = CORDIS ecContribution (EU-Förderung); "foerderung_eur" = Gesamtkosten.
-FUNDING_COLUMN_BY_SOURCE = {"EU FP": "Project Cost"}
-DEFAULT_FUNDING_COLUMN = "foerderung_eur"  # LIFE, FFG, Pins
+# Seit der korrigierten xlsx (2026-09-21) für alle Quellen die EU-Förderung der Organisation;
+# "Project Cost" sind die Kosten und wird hier nicht verwendet.
+DEFAULT_FUNDING_COLUMN = "foerderung_eur"
 
 MISSING_MARKERS ={None, "", "N/A", "n/a"}  # so kennzeichnet die xlsx fehlende Förderbeträge
 
@@ -161,8 +160,7 @@ def build():
         record = xlsx[row["id"]]
         check_bundesland(row, record)
 
-        funding_column = FUNDING_COLUMN_BY_SOURCE.get(record["Source"], DEFAULT_FUNDING_COLUMN)
-        new_funding = format_funding(record[funding_column])
+        new_funding = format_funding(record[DEFAULT_FUNDING_COLUMN])
         if new_funding != row["foerderung_eur"]:
             funding_changed += 1
         row["foerderung_eur"] = new_funding
