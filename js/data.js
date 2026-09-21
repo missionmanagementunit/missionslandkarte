@@ -1,11 +1,11 @@
-// Loads data/projects.csv (semicolon-delimited, decimal comma for coordinates),
+// Loads data/projects_v2.csv (built by build_projects_v2.py; semicolon-delimited, decimal comma for coordinates),
 // parses it into typed project objects, and attaches the result to window.APP_DATA.
 // Fires custom event 'app:data-ready' when done. Unknown CSV columns are ignored.
 
 (function () {
   'use strict';
 
-  const CSV_PATH = 'data/projects.csv';
+  const CSV_PATH = 'data/projects_v2.csv';
 
   const VALID_TYPES    = new Set(['pin', 'point']);
   const VALID_MISSIONS = new Set(['climate', 'cities', 'cancer', 'soil', 'water']);
