@@ -201,10 +201,13 @@
       attributionControl: true,
     });
 
-    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
+    // Esri World Light Gray Base: kein API-Key nötig. CARTO liefert seit 09/2026 nur noch
+    // verwaschene Kacheln mit "API KEY REQUIRED"-Wasserzeichen. Achtung: URL-Reihenfolge ist
+    // {z}/{y}/{x}, und es gibt keine @2x-Variante. maxZoom 16 ist das Limit dieses Dienstes
+    // (die Folien zoomen höchstens auf 11).
+    const tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, Esri, HERE, Garmin',
+      maxZoom: 16,
     }).addTo(map);
 
     let tilesReady = false;
