@@ -67,9 +67,13 @@ COORD_CORRECTIONS = {
 # "Project Cost" sind die Kosten und wird hier nicht verwendet.
 DEFAULT_FUNDING_COLUMN = "foerderung_eur"
 
-MISSING_MARKERS ={None, "", "N/A", "n/a"}  # so kennzeichnet die xlsx fehlende Förderbeträge
+MISSING_MARKERS = {None, "", "N/A", "n/a"}  # so kennzeichnet die xlsx fehlende Förderbeträge
 
-DATE_DMY_LONG =re.compile(r"^(\d{2})\.(\d{2})\.(\d{4})$")   # FFG:  01.10.2024
+# YouTube-ID aus der xlsx-Spalte "Videolink": youtu.be/<id>, watch?v=<id> oder embed/<id>.
+# Die ID ist immer 11 Zeichen; Parameter wie ?si= oder &list= werden ignoriert.
+YOUTUBE_ID_PATTERN = re.compile(r"(?:youtu\.be/|[?&]v=|/embed/)([0-9A-Za-z_-]{11})(?:[?&/]|$)")
+
+DATE_DMY_LONG = re.compile(r"^(\d{2})\.(\d{2})\.(\d{4})$")   # FFG:  01.10.2024
 DATE_DMY_SHORT = re.compile(r"^(\d{2})\.(\d{2})\.(\d{2})$")  # LIFE: 01.07.25
 DATE_YEAR_ONLY = re.compile(r"^\d{4}$")                      # EU FP Startdatum: nur Jahr
 
@@ -115,6 +119,14 @@ def format_date(value):
     raise ValueError(f"Unbekanntes Datumsformat: {value!r}")
 
 
+def extract_video_id(url):
+    """Zieht die YouTube-ID aus einem Videolink; wirft einen Fehler, wenn das Format unbekannt ist."""
+    match = YOUTUBE_ID_PATTERN.search(url)
+    if not match:
+        raise ValueError(f"Keine YouTube-ID im Videolink gefunden: {url!r}")
+    return match.group(1)
+
+
 def check_bundesland(row, xlsx_record):
     """Prüft, dass das Bundesland in der CSV dem korrigierten xlsx-Bundesland entspricht."""
     key = (xlsx_record["city"], xlsx_record["bundesland"])
@@ -155,7 +167,7 @@ def build():
     if missing:
         raise KeyError(f"{len(missing)} IDs aus projects.csv fehlen in der xlsx: {missing[:5]}")
 
-    funding_changed = location_changed = 0
+    funding_changed = location_changed = video_changed = 0
     for row in rows:
         record = xlsx[row["id"]]
         check_bundesland(row, record)
@@ -168,6 +180,14 @@ def build():
         if fix_location(row):
             location_changed += 1
 
+        # Video-Pins: ID immer aus der xlsx ableiten, damit aktualisierte Links hier ankommen.
+        if record.get("Videolink"):
+            new_video_id = extract_video_id(record["Videolink"])
+            if new_video_id != row["video_id"]:
+                video_changed += 1
+            row["video_id"] = new_video_id
+            row["video_type"] = record["video_type"] or row["video_type"]
+
         row["project_start"] = format_date(record["Project Start Date"])
         row["project_end"] = format_date(record["Project End Date"])
 
@@ -179,6 +199,7 @@ def build():
     print(f"{len(rows)} Zeilen -> {OUTPUT_CSV_FILE.relative_to(PROJECT_DIR)}")
     print(f"  foerderung_eur geändert: {funding_changed}")
     print(f"  Standorte geändert:      {location_changed}")
+    print(f"  video_id geändert:       {video_changed}")
 
 
 if __name__ == "__main__":
