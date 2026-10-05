@@ -34,6 +34,25 @@ window.APP_CONFIG = {
     ],
   },
 
+  // Nationale FFG-Förderung pro Mission, aggregiert.
+  // Quelle: FFG Förderstatistik 10.2026 (FFG_261001_Tic46400_Missionsprojekte_FFG.xlsx),
+  // 602 von 733 Projekten zuordenbar, Summe 220.204.765 EUR.
+  // Diese Beträge stehen NICHT in projects_v2.csv: sie decken mehr Projekte ab als die Karte
+  // zeigt (z.B. cities 411 statt 145) und lassen sich keinem Kartenpunkt zuordnen.
+  // Sie fließen nur in das Gesamtvolumen und den Missions-Donut auf Folie 2 ein.
+  // Auf null setzen, um sie wieder auszublenden.
+  nationalFunding: {
+    byMission: {
+      climate:  49133072,
+      cities:  139033497,
+      cancer:   18156849,
+      soil:      5581683,
+      water:     8299664,   // in der Quelle "waters"
+    },
+    projects: 602,
+    source: 'FFG Förderstatistik 10.2026',
+  },
+
   // Missions-Metadaten (Anzeigetexte, Farben)
   // Hier ändern wenn Bezeichnungen angepasst werden sollen
   missions: {

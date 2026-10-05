@@ -2,3 +2,7 @@
 .DS_Store
 CLAUDE.md
 CLAUDE-*.md
+
+# FFG-Förderstatistik: Quelle der aggregierten Zahlen in data/config.js (nationalFunding),
+# bleibt lokal — der Pages-Workflow würde sie sonst öffentlich ausliefern.
+FFG_261001_Tic46400_Missionsprojekte_FFG.xlsx
