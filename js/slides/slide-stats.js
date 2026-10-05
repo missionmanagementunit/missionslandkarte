@@ -64,11 +64,11 @@
     _panel.innerHTML = `
       <div class="stats-grid">
         <div class="stats-card" id="stats-card-1">
-          <div class="stats-card-title">Gesamtvolumen Förderungen</div>
+          <div class="stats-card-title">Gesamtvolumen Förderungen (EU + FFG)</div>
           <div class="stats-card-content" id="stats-content-1"></div>
         </div>
         <div class="stats-card" id="stats-card-2">
-          <div class="stats-card-title">Fördervolumen pro Mission</div>
+          <div class="stats-card-title">Fördervolumen pro Mission (EU + FFG)</div>
           <div class="stats-card-content stats-card-content--donut" id="stats-content-2">
             <div class="stats-donut-canvas-wrap">
               <canvas id="stats-chart-mission"></canvas>
@@ -406,7 +406,18 @@
         (byBundeslandMission[p.bundesland][p.mission] || 0) + 1;
     });
 
-    return { totalFunding, byMission, byBundesland, byBundeslandMission };
+    // Nationale FFG-Förderung aus config.js dazurechnen. Sie ist nur pro Mission bekannt,
+    // fließt also in Gesamtsumme und Donut ein, nicht in die Bundesland-Diagramme.
+    const national = window.APP_CONFIG?.nationalFunding?.byMission;
+    let totalWithNational = totalFunding;
+    if (national) {
+      Object.entries(national).forEach(([mission, eur]) => {
+        byMission[mission] = (byMission[mission] || 0) + eur;
+        totalWithNational += eur;
+      });
+    }
+
+    return { totalFunding: totalWithNational, byMission, byBundesland, byBundeslandMission };
   }
 
   function _missionLabel(key) {
