@@ -391,14 +391,14 @@
   }
 
   function _aggregate(projects) {
-    const pins = projects.filter(p => p.type === 'point');
-    const totalFunding        = pins.reduce((s, p) => s + (p.foerderung_eur || 0), 0);
+    const points = projects.filter(p => p.type === 'point');
     const byMission           = {};
     const byBundesland        = {};
     const byBundeslandMission = {};
 
-    pins.forEach(p => {
-      byMission[p.mission] = (byMission[p.mission] || 0) + (p.foerderung_eur || 0);
+    // Die Bundesland-Diagramme zählen Projekte, kein Geld — sie kommen immer aus der CSV
+    // und bleiben von den aggregierten Förderwerten unten unberührt.
+    points.forEach(p => {
       if (!p.bundesland) return;   // skip rows with missing Bundesland
       byBundesland[p.bundesland] = (byBundesland[p.bundesland] || 0) + 1;
       if (!byBundeslandMission[p.bundesland]) byBundeslandMission[p.bundesland] = {};
@@ -406,18 +406,36 @@
         (byBundeslandMission[p.bundesland][p.mission] || 0) + 1;
     });
 
-    // Nationale FFG-Förderung aus config.js dazurechnen. Sie ist nur pro Mission bekannt,
-    // fließt also in Gesamtsumme und Donut ein, nicht in die Bundesland-Diagramme.
-    const national = window.APP_CONFIG?.nationalFunding?.byMission;
-    let totalWithNational = totalFunding;
-    if (national) {
-      Object.entries(national).forEach(([mission, eur]) => {
+    // Österreichische EU-Förderung (EU-Rahmenprogramme + LIFE) pro Mission.
+    // Die CSV enthält je Projekt nur eine kuratierte Beteiligung; euParticipationFunding
+    // aus config.js deckt alle österreichischen Beteiligungen derselben Projekte ab.
+    // Daher ERSETZEN diese Werte die CSV-Summen — addieren würde die kuratierten Zeilen
+    // doppelt zählen. Ohne den Config-Block fällt die Summe auf die CSV-Beträge zurück.
+    const euParticipation = window.APP_CONFIG?.euParticipationFunding?.byMission;
+    if (euParticipation) {
+      Object.entries(euParticipation).forEach(([mission, eur]) => {
         byMission[mission] = (byMission[mission] || 0) + eur;
-        totalWithNational += eur;
+      });
+    } else {
+      points.forEach(p => {
+        byMission[p.mission] = (byMission[p.mission] || 0) + (p.foerderung_eur || 0);
       });
     }
 
-    return { totalFunding: totalWithNational, byMission, byBundesland, byBundeslandMission };
+    // Nationale FFG-Förderung aus config.js dazurechnen. Sie ist nur pro Mission bekannt,
+    // fließt also in Gesamtsumme und Donut ein, nicht in die Bundesland-Diagramme.
+    const national = window.APP_CONFIG?.nationalFunding?.byMission;
+    if (national) {
+      Object.entries(national).forEach(([mission, eur]) => {
+        byMission[mission] = (byMission[mission] || 0) + eur;
+      });
+    }
+
+    // Aus byMission ableiten, damit die Gesamtsumme (Karte 1) immer der Summe der
+    // Donut-Segmente (Karte 2) entspricht.
+    const totalFunding = Object.values(byMission).reduce((s, v) => s + v, 0);
+
+    return { totalFunding, byMission, byBundesland, byBundeslandMission };
   }
 
   function _missionLabel(key) {

@@ -34,6 +34,43 @@ window.APP_CONFIG = {
     ],
   },
 
+  // Österreichische EU-Förderung pro Mission: ALLE österreichischen Beteiligungen
+  // (EU-Rahmenprogramme + LIFE) in den auf der Karte gezeigten Projekten.
+  // Quelle: Backend Project Selection, ergänzt um CORDIS-Abruf vom 06.10.2026
+  // (reports/Backend Project Selection_alle-AT-Beteiligungen_2026-10-06.xlsx, Blatt
+  // "Beteiligungen"), Basis Projekt_Typ = point — also ohne die Pin-Projekte, genau wie
+  // _aggregate() in slide-stats.js nur type === 'point' summiert.
+  //
+  // Warum nicht aus projects_v2.csv: die CSV enthält je Projekt nur EINE kuratierte
+  // österreichische Beteiligung (Fokus: österreichische Erfolge auf der Karte). 295 der
+  // 923 EU-Projekte (32 %) haben mehr als eine österreichische Beteiligung, 293 davon
+  // mehr als eine eigene Organisation; 510 Beteiligungen fehlen dadurch, und zwar
+  // ungleichmäßig je Mission, was die Donut-Anteile verzerrt.
+  // Diese Werte ersetzen in slide-stats.js die aus der CSV summierten EU-Beträge
+  // (nicht zusätzlich — sonst würden die kuratierten Zeilen doppelt gezählt).
+  // Die Karte bleibt unverändert: die 510 ergänzten Beteiligungen sind keine Kartenpunkte.
+  //
+  // Einschränkungen:
+  // - LIFE ist mit kuratierten Anteilen enthalten (12.292.954 EUR): die LIFE-Datenbank
+  //   veröffentlicht nur Projektwerte, keine Beteiligungsdaten.
+  // - Die Projektauswahl selbst bleibt eine Auswahl. Die Summe gilt für "alle
+  //   österreichischen Beteiligungen in den gezeigten Projekten", nicht für "alle
+  //   österreichischen Missionsprojekte".
+  // Auf null setzen, um wieder die kuratierten CSV-Beträge zu verwenden (403,7 Mio.).
+  euParticipationFunding: {
+    byMission: {
+      climate: 201032241,   // EU 199.791.266 + LIFE 1.240.975
+      cities:   64917366,   // EU  60.804.149 + LIFE 4.113.217
+      cancer:  136211653,   // EU 136.211.653 + LIFE         0
+      soil:     37174807,   // EU  37.174.807 + LIFE         0
+      water:   153963374,   // EU 147.024.612 + LIFE 6.938.762 — in der Quelle "waters"
+    },
+    euTotal:        581006487,
+    lifeTotal:       12292954,
+    addedParticipations: 510,
+    source: 'Backend Project Selection + CORDIS-Abruf 06.10.2026',
+  },
+
   // Nationale FFG-Förderung pro Mission, aggregiert.
   // Quelle: FFG Förderstatistik 10.2026 (FFG_261001_Tic46400_Missionsprojekte_FFG.xlsx),
   // 602 von 733 Projekten zuordenbar, Summe 220.204.765 EUR.
