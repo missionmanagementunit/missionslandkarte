@@ -248,7 +248,14 @@
         responsive:          true,
         maintainAspectRatio: false,
         clip:                false,
-        animation:           { duration: 900, easing: 'easeOutQuart' },
+        animation: {
+          duration: 900,
+          easing:   'easeInOutQuart',
+          // easeOutQuart erreichte 94 % der Endlänge in 450 ms — die Balken sahen
+          // dadurch aus, als wären sie sofort fertig. Der Versatz pro Balken lässt
+          // die Zeilen zusätzlich nacheinander aufbauen.
+          delay: ctx => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 45 : 0,
+        },
         layout: { padding: { right: 28 } },
         plugins: { legend: { display: false } },
         scales: {
@@ -336,7 +343,14 @@
         responsive:          true,
         maintainAspectRatio: false,
         clip:                false,
-        animation:           { duration: 900, easing: 'easeOutQuart' },
+        animation: {
+          duration: 900,
+          easing:   'easeInOutQuart',
+          // easeOutQuart erreichte 94 % der Endlänge in 450 ms — die Balken sahen
+          // dadurch aus, als wären sie sofort fertig. Der Versatz pro Balken lässt
+          // die Zeilen zusätzlich nacheinander aufbauen.
+          delay: ctx => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 45 : 0,
+        },
         layout: { padding: { right: 28 } },
         plugins: {
           legend: {

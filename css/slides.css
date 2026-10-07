@@ -282,6 +282,14 @@
   justify-content: center;
 }
 
+/* Nur ein Sicherheitsnetz: wo die Breite korrekt aus aspect-ratio folgt, ist
+   min-width wirkungslos (267px > 220px). Fällt die Breite dagegen auf 0 zusammen
+   (Safari), bleibt der Donut dank dieses Mindestmaßes sichtbar. Eine feste width
+   würde aspect-ratio überstimmen und den Kasten unnötig rechteckig machen. */
+.stats-card--wide .stats-donut-canvas-wrap {
+  min-width: 220px;
+}
+
 .stats-card--wide .stats-donut-legend {
   flex: 0 1 340px;
 }
@@ -304,6 +312,10 @@
 
 .stats-donut-canvas-wrap {
   position: relative;
+  /* Definite Höhe, damit die Breite aus aspect-ratio ableitbar ist: Safari nimmt
+     sonst die Content-Breite (das Canvas ist absolut positioniert, also 0) und
+     lässt das Element auf Breite 0 zusammenfallen — der Donut fehlt dann ganz. */
+  height: 100%;
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
 }
