@@ -46,8 +46,11 @@ window.APP_CONFIG = {
   // 923 EU-Projekte (32 %) haben mehr als eine österreichische Beteiligung, 293 davon
   // mehr als eine eigene Organisation; 510 Beteiligungen fehlen dadurch, und zwar
   // ungleichmäßig je Mission, was die Donut-Anteile verzerrt.
-  // Diese Werte ersetzen in slide-stats.js die aus der CSV summierten EU-Beträge
-  // (nicht zusätzlich — sonst würden die kuratierten Zeilen doppelt gezählt).
+  // STAND 07.10.2026: Diese Werte werden auf Folie 2 NICHT MEHR ANGEZEIGT. Der Donut
+  // zeigt seither Projekte pro Mission, nicht Förderanteile — Förderbeträge hätten sonst
+  // über die Donut-Proportionen weitergewirkt, obwohl EU- und FFG-Zahlen unterschiedliche
+  // Grundgesamtheiten haben. Der Block bleibt als Beleg der geprüften Summen stehen und
+  // ist die Grundlage für mündliche Aussagen zum Fördervolumen.
   // Die Karte bleibt unverändert: die 510 ergänzten Beteiligungen sind keine Kartenpunkte.
   //
   // Einschränkungen:
@@ -56,7 +59,7 @@ window.APP_CONFIG = {
   // - Die Projektauswahl selbst bleibt eine Auswahl. Die Summe gilt für "alle
   //   österreichischen Beteiligungen in den gezeigten Projekten", nicht für "alle
   //   österreichischen Missionsprojekte".
-  // Auf null setzen, um wieder die kuratierten CSV-Beträge zu verwenden (403,7 Mio.).
+
   euParticipationFunding: {
     byMission: {
       climate: 201032241,   // EU 199.791.266 + LIFE 1.240.975
@@ -76,8 +79,8 @@ window.APP_CONFIG = {
   // 602 von 733 Projekten zuordenbar, Summe 220.204.765 EUR.
   // Diese Beträge stehen NICHT in projects_v2.csv: sie decken mehr Projekte ab als die Karte
   // zeigt (z.B. cities 411 statt 145) und lassen sich keinem Kartenpunkt zuordnen.
-  // Sie fließen nur in das Gesamtvolumen und den Missions-Donut auf Folie 2 ein.
-  // Auf null setzen, um sie wieder auszublenden.
+  // STAND 07.10.2026: Werden auf Folie 2 NICHT MEHR ANGEZEIGT (siehe
+  // euParticipationFunding oben). Bleiben als Beleg stehen.
   nationalFunding: {
     byMission: {
       climate:  49133072,

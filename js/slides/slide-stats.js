@@ -72,7 +72,7 @@
     _panel.innerHTML = `
       <div class="stats-grid">
         <div class="stats-card stats-card--wide" id="stats-card-1">
-          <div class="stats-card-title">Anteile am Fördervolumen</div>
+          <div class="stats-card-title">Projekte pro Mission</div>
           <div class="stats-card-content stats-card-content--donut" id="stats-content-1">
             <div class="stats-donut-canvas-wrap">
               <canvas id="stats-chart-mission"></canvas>
@@ -143,8 +143,8 @@
     const total    = values.reduce((a, b) => a + b, 0);
 
     // HTML legend — avoids canvas text clipping and fills any screen width.
-    // Zeigt Anteile, keine Eurobeträge: Folie 2 nennt bewusst keine Summen mehr,
-    // weil EU- und FFG-Beträge unterschiedliche Grundgesamtheiten haben.
+    // Prozentwerte statt absoluter Zahlen: die Stückzahlen je Mission stehen bereits
+    // in der Seitenleiste, der Tooltip nennt sie zusätzlich.
     if (legendEl) {
       legendEl.innerHTML = missions.map((m, i) => {
         const pct = total === 0 ? 0 : values[i] / total * 100;
@@ -199,7 +199,7 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => ` ${total === 0 ? 0 : Math.round(ctx.raw / total * 100)} %`,
+              label: ctx => ` ${ctx.raw} Projekte (${total === 0 ? 0 : Math.round(ctx.raw / total * 100)} %)`,
             },
           },
         },
@@ -401,9 +401,12 @@
       byBundeslandMission[bl] = {};
     });
 
-    // Die Bundesland-Diagramme zählen Projekte, kein Geld — sie kommen immer aus der CSV
-    // und bleiben von den aggregierten Förderwerten unten unberührt.
+    // Alle drei Diagramme zählen Projekte, kein Geld, und zwar dieselbe Menge:
+    // Donut und Regionaldiagramme summieren sich beide auf 1193. Jede Zahl auf
+    // Folie 2 lässt sich damit gegen jede andere prüfen, auch gegen die Legende
+    // in der Seitenleiste, die dieselben Projekte je Mission zählt.
     mapped.forEach(p => {
+      byMission[p.mission] = (byMission[p.mission] || 0) + 1;
       if (!p.bundesland) return;   // skip rows with missing Bundesland
       byBundesland[p.bundesland] = (byBundesland[p.bundesland] || 0) + 1;
       if (!byBundeslandMission[p.bundesland]) byBundeslandMission[p.bundesland] = {};
@@ -411,32 +414,11 @@
         (byBundeslandMission[p.bundesland][p.mission] || 0) + 1;
     });
 
-    // Österreichische EU-Förderung (EU-Rahmenprogramme + LIFE) pro Mission.
-    // Die CSV enthält je Projekt nur eine kuratierte Beteiligung; euParticipationFunding
-    // aus config.js deckt alle österreichischen Beteiligungen derselben Projekte ab.
-    // Daher ERSETZEN diese Werte die CSV-Summen — addieren würde die kuratierten Zeilen
-    // doppelt zählen. Ohne den Config-Block fällt die Summe auf die CSV-Beträge zurück.
-    const euParticipation = window.APP_CONFIG?.euParticipationFunding?.byMission;
-    if (euParticipation) {
-      Object.entries(euParticipation).forEach(([mission, eur]) => {
-        byMission[mission] = (byMission[mission] || 0) + eur;
-      });
-    } else {
-      // Förderbeträge beziehen sich auf Projekt_Typ = point — gleiche Basis wie
-      // euParticipationFunding in config.js, daher hier ohne Pins.
-      projects.filter(p => p.type === 'point').forEach(p => {
-        byMission[p.mission] = (byMission[p.mission] || 0) + (p.foerderung_eur || 0);
-      });
-    }
-
-    // Nationale FFG-Förderung aus config.js dazurechnen. Sie ist nur pro Mission bekannt,
-    // fließt also in Gesamtsumme und Donut ein, nicht in die Bundesland-Diagramme.
-    const national = window.APP_CONFIG?.nationalFunding?.byMission;
-    if (national) {
-      Object.entries(national).forEach(([mission, eur]) => {
-        byMission[mission] = (byMission[mission] || 0) + eur;
-      });
-    }
+    // Hinweis: euParticipationFunding und nationalFunding aus config.js fließen
+    // bewusst NICHT mehr hier ein. Folie 2 zeigt keine Förderbeträge und keine
+    // Förderanteile mehr — die Beträge blieben sonst über die Donut-Proportionen
+    // sichtbar, obwohl EU- und FFG-Zahlen unterschiedliche Grundgesamtheiten haben.
+    // Die Blöcke bleiben als Beleg in config.js stehen.
 
     return { byMission, byBundesland, byBundeslandMission };
   }
