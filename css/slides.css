@@ -271,6 +271,30 @@
   inset: 0;
 }
 
+/* Folie 2: Donut über die gesamte obere Hälfte, darunter die zwei Regionaldiagramme */
+.stats-card--wide {
+  grid-column: 1 / -1;
+}
+
+/* Im breiten Kopfbereich Donut und Legende als Paar zentrieren, damit die Legende
+   nicht über die ganze Bildschirmbreite auseinanderläuft. */
+.stats-card--wide .stats-card-content--donut {
+  justify-content: center;
+}
+
+.stats-card--wide .stats-donut-legend {
+  flex: 0 1 340px;
+}
+
+.stats-card--wide .stats-donut-legend-label {
+  font-size: 13px;
+}
+
+.stats-card--wide .stats-donut-legend-value {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
 /* Donut card: square canvas on the left, HTML legend on the right */
 .stats-card-content--donut {
   align-items: stretch;
@@ -322,23 +346,6 @@
   color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
   white-space: nowrap;
-}
-
-/* Count-up total */
-.stats-total-value {
-  font-size: 52px;
-  font-weight: 700;
-  color: white;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  text-align: center;
-}
-
-.stats-total-unit {
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--neutral-400);
-  margin-left: 4px;
 }
 
 /* ── Sidebar legend ──────────────────────────────────────────────────── */

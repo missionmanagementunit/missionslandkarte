@@ -1,13 +1,21 @@
-// Stats panel for Folie 2 — 4-step overlay covering the map.
-// Step 1: total funding (count-up)   Step 2: donut by mission
-// Step 3: bar by Bundesland          Step 4: stacked bar mission × Bundesland
+// Stats panel for Folie 2 — 3-step overlay covering the map.
+// Step 1: donut by mission (top half)
+// Step 2: bar by Bundesland        Step 3: stacked bar mission × Bundesland
+// Steps 2 and 3 share the bottom half.
 //
 // Exposed as APP_STATS_PANEL: { init, nextStep, prevStep, isOpen, close }
 
 (function () {
   'use strict';
 
-  const MAX_STEPS = 4;
+  const MAX_STEPS = 3;
+
+  // Alle neun Bundesländer, damit die Regionaldiagramme Österreich vollständig zeigen.
+  // Burgenland hat derzeit 0 Projekte und erscheint dadurch als 0-Zeile statt zu fehlen.
+  const BUNDESLAENDER = [
+    'Burgenland', 'Kärnten', 'Niederösterreich', 'Oberösterreich', 'Salzburg',
+    'Steiermark', 'Tirol', 'Vorarlberg', 'Wien',
+  ];
 
   let _step   = 0;
   let _panel  = null;
@@ -63,28 +71,24 @@
   function _buildGrid() {
     _panel.innerHTML = `
       <div class="stats-grid">
-        <div class="stats-card" id="stats-card-1">
-          <div class="stats-card-title">Gesamtvolumen Förderungen (EU + FFG)</div>
-          <div class="stats-card-content" id="stats-content-1"></div>
-        </div>
-        <div class="stats-card" id="stats-card-2">
-          <div class="stats-card-title">Fördervolumen pro Mission (EU + FFG)</div>
-          <div class="stats-card-content stats-card-content--donut" id="stats-content-2">
+        <div class="stats-card stats-card--wide" id="stats-card-1">
+          <div class="stats-card-title">Anteile am Fördervolumen</div>
+          <div class="stats-card-content stats-card-content--donut" id="stats-content-1">
             <div class="stats-donut-canvas-wrap">
               <canvas id="stats-chart-mission"></canvas>
             </div>
             <div id="stats-donut-legend" class="stats-donut-legend"></div>
           </div>
         </div>
-        <div class="stats-card" id="stats-card-3">
+        <div class="stats-card" id="stats-card-2">
           <div class="stats-card-title">Projekte pro Bundesland</div>
-          <div class="stats-card-content" id="stats-content-3">
+          <div class="stats-card-content" id="stats-content-2">
             <canvas id="stats-chart-bundesland"></canvas>
           </div>
         </div>
-        <div class="stats-card" id="stats-card-4">
+        <div class="stats-card" id="stats-card-3">
           <div class="stats-card-title">Missionen pro Bundesland</div>
-          <div class="stats-card-content" id="stats-content-4">
+          <div class="stats-card-content" id="stats-content-3">
             <canvas id="stats-chart-stacked"></canvas>
           </div>
         </div>
@@ -124,17 +128,9 @@
   // ── Step renderers ────────────────────────────────────────────────────
 
   function _renderCard(step) {
-    if (step === 1) _renderTotal();
-    else if (step === 2) _renderMissionDonut();
-    else if (step === 3) _renderBundeslandBar();
-    else if (step === 4) _renderStackedBar();
-  }
-
-  function _renderTotal() {
-    const el = document.getElementById('stats-content-1');
-    if (!el) return;
-    el.innerHTML = '<div class="stats-total-value" id="stats-total-num"></div>';
-    _countUp(document.getElementById('stats-total-num'), _data.totalFunding, 1800);
+    if (step === 1) _renderMissionDonut();
+    else if (step === 2) _renderBundeslandBar();
+    else if (step === 3) _renderStackedBar();
   }
 
   function _renderMissionDonut() {
@@ -146,16 +142,16 @@
     const values   = missions.map(m => _data.byMission[m] || 0);
     const total    = values.reduce((a, b) => a + b, 0);
 
-    // HTML legend — avoids canvas text clipping and fills any screen width
+    // HTML legend — avoids canvas text clipping and fills any screen width.
+    // Zeigt Anteile, keine Eurobeträge: Folie 2 nennt bewusst keine Summen mehr,
+    // weil EU- und FFG-Beträge unterschiedliche Grundgesamtheiten haben.
     if (legendEl) {
       legendEl.innerHTML = missions.map((m, i) => {
-        const mio = (values[i] / 1_000_000).toLocaleString('de-AT', {
-          minimumFractionDigits: 1, maximumFractionDigits: 1,
-        });
+        const pct = total === 0 ? 0 : values[i] / total * 100;
         return `<div class="stats-donut-legend-item">
           <span class="stats-donut-legend-swatch" style="background:${_missionColor(m)}"></span>
           <span class="stats-donut-legend-label">${_missionLabel(m)}</span>
-          <span class="stats-donut-legend-value">${mio} Mio.</span>
+          <span class="stats-donut-legend-value">${Math.round(pct)} %</span>
         </div>`;
       }).join('');
     }
@@ -172,7 +168,7 @@
           const pos = arc.tooltipPosition();
           ctx.save();
           ctx.fillStyle    = 'white';
-          ctx.font         = 'bold 11px sans-serif';
+          ctx.font         = 'bold 14px sans-serif';
           ctx.textAlign    = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(`${Math.round(pct)}%`, pos.x, pos.y);
@@ -181,7 +177,7 @@
       },
     };
 
-    _charts[2] = new Chart(canvas, {
+    _charts[1] = new Chart(canvas, {
       type: 'doughnut',
       data: {
         labels:   missions.map(_missionLabel),
@@ -203,7 +199,7 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => ` € ${(ctx.raw / 1_000_000).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mio.`,
+              label: ctx => ` ${total === 0 ? 0 : Math.round(ctx.raw / total * 100)} %`,
             },
           },
         },
@@ -229,14 +225,14 @@
         ctx.textAlign    = 'left';
         meta.data.forEach((bar, i) => {
           const val = chart.data.datasets[0].data[i];
-          if (!val) return;
+          if (val == null) return;   // 0 wird bewusst beschriftet
           ctx.fillText(val, bar.x + 4, bar.y);
         });
         ctx.restore();
       },
     };
 
-    _charts[3] = new Chart(canvas, {
+    _charts[2] = new Chart(canvas, {
       type: 'bar',
       data: {
         labels:   entries.map(e => e[0]),
@@ -311,7 +307,7 @@
         ctx.textAlign    = 'left';
         data.labels.forEach((_, i) => {
           const total = data.datasets.reduce((s, ds) => s + (ds.data[i] || 0), 0);
-          if (!total) return;
+          if (!Number.isFinite(total)) return;   // 0 wird bewusst beschriftet
           const xPx = scales.x.getPixelForValue(total);
           const yPx = lastMeta.data[i]?.y;
           if (yPx == null) return;
@@ -323,7 +319,7 @@
       },
     };
 
-    _charts[4] = new Chart(canvas, {
+    _charts[3] = new Chart(canvas, {
       type: 'bar',
       data: {
         labels:   bundeslaender,
@@ -374,31 +370,26 @@
 
   // ── Helpers ───────────────────────────────────────────────────────────
 
-  function _countUp(el, targetEur, duration) {
-    if (!el) return;
-    const start = Date.now();
-    const tick = () => {
-      const elapsed  = Date.now() - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased    = 1 - Math.pow(1 - progress, 3);
-      const value    = eased * targetEur;
-      el.innerHTML   = `€ ${(value / 1_000_000).toLocaleString('de-AT', {
-        minimumFractionDigits: 1, maximumFractionDigits: 1,
-      })} <span class="stats-total-unit">Mio.</span>`;
-      if (progress < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }
-
   function _aggregate(projects) {
-    const points = projects.filter(p => p.type === 'point');
+    // Die Regionaldiagramme zählen alles, was die Karte zeigt — Punkte UND Pins.
+    // Ohne die Pins stünde Vorarlberg auf 0, obwohl dort ein Pin-Projekt liegt
+    // (aMooRe, Bregenz): es ist das einzige Projekt des Bundeslandes.
+    const mapped = projects.filter(p => p.type === 'point' || p.type === 'pin');
     const byMission           = {};
     const byBundesland        = {};
     const byBundeslandMission = {};
 
+    // Alle neun Bundesländer vorbelegen, damit die Regionaldiagramme Österreich
+    // vollständig zeigen: Regionen ohne Projekte bleiben als 0-Zeile sichtbar,
+    // statt stillschweigend zu fehlen.
+    BUNDESLAENDER.forEach(bl => {
+      byBundesland[bl]        = 0;
+      byBundeslandMission[bl] = {};
+    });
+
     // Die Bundesland-Diagramme zählen Projekte, kein Geld — sie kommen immer aus der CSV
     // und bleiben von den aggregierten Förderwerten unten unberührt.
-    points.forEach(p => {
+    mapped.forEach(p => {
       if (!p.bundesland) return;   // skip rows with missing Bundesland
       byBundesland[p.bundesland] = (byBundesland[p.bundesland] || 0) + 1;
       if (!byBundeslandMission[p.bundesland]) byBundeslandMission[p.bundesland] = {};
@@ -417,7 +408,9 @@
         byMission[mission] = (byMission[mission] || 0) + eur;
       });
     } else {
-      points.forEach(p => {
+      // Förderbeträge beziehen sich auf Projekt_Typ = point — gleiche Basis wie
+      // euParticipationFunding in config.js, daher hier ohne Pins.
+      projects.filter(p => p.type === 'point').forEach(p => {
         byMission[p.mission] = (byMission[p.mission] || 0) + (p.foerderung_eur || 0);
       });
     }
@@ -431,11 +424,7 @@
       });
     }
 
-    // Aus byMission ableiten, damit die Gesamtsumme (Karte 1) immer der Summe der
-    // Donut-Segmente (Karte 2) entspricht.
-    const totalFunding = Object.values(byMission).reduce((s, v) => s + v, 0);
-
-    return { totalFunding, byMission, byBundesland, byBundeslandMission };
+    return { byMission, byBundesland, byBundeslandMission };
   }
 
   function _missionLabel(key) {
