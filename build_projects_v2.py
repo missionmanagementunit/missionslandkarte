@@ -9,6 +9,7 @@ Korrigiert gegenüber projects.csv:
   2. Standorte       — Bundesland-Korrekturen geprüft, Nominatim-Fehltreffer korrigiert,
                        doppelte Ortsnamen vereinheitlicht
   3. Datumsangaben   — neue Spalten project_start / project_end im ISO-8601-Format
+  4. Manuelle Vorgaben — NAME_OVERRIDES / FUNDING_OVERRIDES je Projekt-ID
 
 Alle anderen Felder (Koordinaten, Pin-Felder, Video-IDs) werden unverändert übernommen.
 
@@ -66,6 +67,16 @@ COORD_CORRECTIONS = {
 # Seit der korrigierten xlsx (2026-09-21) für alle Quellen die EU-Förderung der Organisation;
 # "Project Cost" sind die Kosten und wird hier nicht verwendet.
 DEFAULT_FUNDING_COLUMN = "foerderung_eur"
+
+# Manuelle Vorgaben je Projekt-ID, gehen vor xlsx und projects.csv (Stand 2026-10-13).
+NAME_OVERRIDES = {
+    "101104368": "AMooRe",  # Schreibweise laut Vorgabe, war "aMooRe"
+}
+FUNDING_OVERRIDES = {
+    # aMooRe: xlsx enthält nur den Anteil des Landes Vorarlberg (11.437.688 EUR);
+    # gezeigt wird laut Vorgabe die Förderung des Gesamtprojekts.
+    "101104368": "26000000",
+}
 
 MISSING_MARKERS = {None, "", "N/A", "n/a"}  # so kennzeichnet die xlsx fehlende Förderbeträge
 
@@ -172,10 +183,12 @@ def build():
         record = xlsx[row["id"]]
         check_bundesland(row, record)
 
-        new_funding = format_funding(record[DEFAULT_FUNDING_COLUMN])
+        new_funding = FUNDING_OVERRIDES.get(row["id"]) or format_funding(record[DEFAULT_FUNDING_COLUMN])
         if new_funding != row["foerderung_eur"]:
             funding_changed += 1
         row["foerderung_eur"] = new_funding
+
+        row["name"] = NAME_OVERRIDES.get(row["id"], row["name"])
 
         if fix_location(row):
             location_changed += 1

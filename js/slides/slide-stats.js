@@ -387,7 +387,7 @@
   function _aggregate(projects) {
     // Die Regionaldiagramme zählen alles, was die Karte zeigt — Punkte UND Pins.
     // Ohne die Pins stünde Vorarlberg auf 0, obwohl dort ein Pin-Projekt liegt
-    // (aMooRe, Bregenz): es ist das einzige Projekt des Bundeslandes.
+    // (AMooRe, Bregenz): es ist das einzige Projekt des Bundeslandes.
     const mapped = projects.filter(p => p.type === 'point' || p.type === 'pin');
     const byMission           = {};
     const byBundesland        = {};
