@@ -11,3 +11,8 @@ FFG_*_Missionsprojekte_FFG.xlsx
 # Quelle der Werte in data/config.js euParticipationFunding). Bleiben lokal —
 # der Pages-Workflow würde sie sonst öffentlich ausliefern.
 reports/
+
+# Kuratiertes Quell-Workbook für build_projects_v2.py. Bleibt lokal —
+# enthält interne Klassifikations-Scores und Datei-Metadaten.
+Backend Project Selection.xlsx
+~$*.xlsx

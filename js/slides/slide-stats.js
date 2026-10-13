@@ -414,11 +414,10 @@
         (byBundeslandMission[p.bundesland][p.mission] || 0) + 1;
     });
 
-    // Hinweis: euParticipationFunding und nationalFunding aus config.js fließen
-    // bewusst NICHT mehr hier ein. Folie 2 zeigt keine Förderbeträge und keine
-    // Förderanteile mehr — die Beträge blieben sonst über die Donut-Proportionen
-    // sichtbar, obwohl EU- und FFG-Zahlen unterschiedliche Grundgesamtheiten haben.
-    // Die Blöcke bleiben als Beleg in config.js stehen.
+    // Hinweis: Folie 2 zeigt bewusst keine Förderbeträge und keine Förderanteile.
+    // Beträge würden sonst über die Donut-Proportionen sichtbar, obwohl EU- und
+    // FFG-Zahlen unterschiedliche Grundgesamtheiten haben. Die aggregierten
+    // Förderzahlen sind daher auch nicht mehr in config.js veröffentlicht.
 
     return { byMission, byBundesland, byBundeslandMission };
   }

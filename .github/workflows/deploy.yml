@@ -37,9 +37,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      # Publish only the runtime files. Uploading the repo root would also serve
+      # the source workbook, build scripts and other working files publicly.
+      - name: Stage site files
+        run: |
+          mkdir -p _site/data
+          cp -R index.html css js assets _site/
+          cp data/config.js data/projects_v2.csv _site/data/
+          find _site -name .gitkeep -delete
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - uses: actions/deploy-pages@v4
         id: deployment
