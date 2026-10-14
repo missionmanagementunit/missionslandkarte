@@ -16,3 +16,13 @@ reports/
 # enthält interne Klassifikations-Scores und Datei-Metadaten.
 Backend Project Selection.xlsx
 ~$*.xlsx
+
+# Referenzdokumente (Sprechtexte, Quellen, Entwürfe) bleiben lokal —
+# u.a. Sprechtexte_Missionslandkarte_A5.docx. Inhalte für die Seite werden
+# in data/ übernommen, nicht die Dokumente selbst.
+*.docx
+*.doc
+*.pptx
+*.pdf
+*.odt
+~$*

@@ -72,7 +72,8 @@
     const el = document.getElementById(sidebarId);
     if (!el) return;
 
-    const cfg  = window.APP_CONFIG?.missions?.[missionKey] || { label: missionKey };
+    const cfg   = window.APP_CONFIG?.missions?.[missionKey] || { label: missionKey };
+    const intro = window.APP_PIN_TEXTS?.missionIntros?.[missionKey];
     const pins = missionProjects
       .filter(p => p.type === 'pin')
       .sort((a, b) => (a.video_pin_order ?? 0) - (b.video_pin_order ?? 0));
@@ -84,6 +85,7 @@
         <img src="assets/logos/Mission_${MISSION_SVG[missionKey]}.svg" class="mission-sidebar-icon" width="64" height="64">
         <span class="mission-sidebar-title">${cfg.label}</span>
       </div>
+      ${intro ? `<p class="mission-sidebar-intro">${_escHtml(intro)}</p>` : ''}
       <div class="mission-pin-list">
     `;
 
@@ -103,7 +105,7 @@
       html += `
         <div class="mission-pin-item" data-pin-id="${pin.id}" role="button" tabindex="0">
           ${previewHtml}
-          <span class="mission-pin-name">${pin.name}</span>
+          <span class="mission-pin-name">${_escHtml(pin.name)}</span>
         </div>
       `;
     });
@@ -129,6 +131,15 @@
   }
 
   // ── Keyboard navigation (called by keyboard.js) ───────────────────────────
+
+  /** Escapes text for safe insertion into HTML markup. */
+  function _escHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 
   function _navigatePin(missionKey, delta) {
     const pins = _pins[missionKey];

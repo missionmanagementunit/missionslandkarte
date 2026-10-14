@@ -9,7 +9,7 @@ Korrigiert gegenüber projects.csv:
   2. Standorte       — Bundesland-Korrekturen geprüft, Nominatim-Fehltreffer korrigiert,
                        doppelte Ortsnamen vereinheitlicht
   3. Datumsangaben   — neue Spalten project_start / project_end im ISO-8601-Format
-  4. Manuelle Vorgaben — NAME_OVERRIDES / FUNDING_OVERRIDES je Projekt-ID
+  4. Manuelle Vorgaben — NAME_OVERRIDES / FUNDING_OVERRIDES je Projekt-ID, KEYWORD_FIXES
 
 Alle anderen Felder (Koordinaten, Pin-Felder, Video-IDs) werden unverändert übernommen.
 
@@ -76,6 +76,11 @@ FUNDING_OVERRIDES = {
     # aMooRe: xlsx enthält nur den Anteil des Landes Vorarlberg (11.437.688 EUR);
     # gezeigt wird laut Vorgabe die Förderung des Gesamtprojekts.
     "101104368": "26000000",
+}
+
+# Tippfehler in Schlagworten aus projects.csv (falsch -> richtig), Stand 2026-10-14.
+KEYWORD_FIXES = {
+    "Klimaneutrale Staft": "Klimaneutrale Stadt",  # KING (4121983)
 }
 
 MISSING_MARKERS = {None, "", "N/A", "n/a"}  # so kennzeichnet die xlsx fehlende Förderbeträge
@@ -189,6 +194,8 @@ def build():
         row["foerderung_eur"] = new_funding
 
         row["name"] = NAME_OVERRIDES.get(row["id"], row["name"])
+        for wrong, right in KEYWORD_FIXES.items():
+            row["keywords"] = row["keywords"].replace(wrong, right)
 
         if fix_location(row):
             location_changed += 1

@@ -141,6 +141,14 @@
       ? `<div class="tile-funding">${_formatFunding(p.foerderung_eur)}</div>`
       : '';
 
+    // Pins with a curated text (data/pin-texts.js) show its header line instead of the
+    // raw organisation name, plus the description paragraphs.
+    const pinText = window.APP_PIN_TEXTS?.pins?.[p.id];
+    const orgHtml = `<div class="tile-org">${_esc(pinText?.meta || p.organisation)}</div>`;
+    const descriptionHtml = pinText?.paragraphs?.length
+      ? `<div class="tile-description">${pinText.paragraphs.map(t => `<p>${_esc(t)}</p>`).join('')}</div>`
+      : '';
+
     const linkHtml = p.link
       ? `<a class="tile-link" href="${_esc(p.link)}" target="_blank" rel="noopener noreferrer">↗ Projektseite</a>`
       : '';
@@ -155,8 +163,9 @@
             <span class="tile-mission-label">${_esc(missionLabel)}</span>
           </div>
           <h2 class="tile-name">${_esc(p.name)}</h2>
-          <div class="tile-org">${_esc(p.organisation)}</div>
+          ${orgHtml}
           <div class="tile-location">📍 ${_esc(p.city)}, ${_esc(p.bundesland)}</div>
+          ${descriptionHtml}
           ${keywordsHtml}
           ${fundingHtml}
           ${linkHtml}

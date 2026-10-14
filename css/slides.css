@@ -575,6 +575,19 @@
   color: var(--neutral-600);
 }
 
+.tile-description {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tile-description p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--neutral-800);
+}
+
 .tile-keywords {
   display: flex;
   flex-wrap: wrap;
@@ -688,6 +701,15 @@
   color: white;
   text-align: center;
   line-height: 1.3;
+}
+
+.mission-sidebar-intro {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--neutral-200);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--neutral-700);
+  flex-shrink: 0;
 }
 
 .mission-pin-list {

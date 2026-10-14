@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p _site/data
           cp -R index.html css js assets _site/
-          cp data/config.js data/projects_v2.csv _site/data/
+          cp data/config.js data/pin-texts.js data/projects_v2.csv _site/data/
           find _site -name .gitkeep -delete
 
       - uses: actions/configure-pages@v5
